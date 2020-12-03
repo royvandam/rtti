@@ -1,6 +1,6 @@
-#include <rtti.hh>
-
 #include <gtest/gtest.h>
+
+#include <rtti.hh>
 
 namespace {
 
@@ -13,8 +13,7 @@ namespace {
         using Shape::cast;
     };
 
-    class RTTITest : public ::testing::Test
-    {};
+    class RTTITest : public ::testing::Test {};
 
     TEST_F(RTTITest, TypeIdentification) {
         Shape shape;
@@ -68,4 +67,4 @@ namespace {
         EXPECT_EQ(base->cast<Shape*>(), shape);
         EXPECT_EQ(base->cast<Square*>(), nullptr);
     }
-}
+}  // namespace
