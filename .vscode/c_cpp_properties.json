@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "includePath": [
+                "${workspaceFolder}/include/**",
+                "${workspaceFolder}/build/external/include/**"
+            ]
+        }
+    ],
+    "version": 4
+}

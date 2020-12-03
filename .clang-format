@@ -1,0 +1,35 @@
+﻿---
+BasedOnStyle: Google
+
+IndentCaseLabels: true
+IndentWidth: 4
+NamespaceIndentation: All
+TabWidth: 4
+ColumnLimit: 100
+
+AccessModifierOffset: -4
+
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma
+BreakBeforeBraces: Custom
+BraceWrapping:
+    AfterStruct: false
+    AfterClass: false
+    AfterEnum: false
+
+AlwaysBreakAfterReturnType: TopLevel
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: Empty
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortBlocksOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakTemplateDeclarations: Yes
+IndentPPDirectives: BeforeHash
+
+FixNamespaceComments: true
+
+PointerAlignment: Left
+AlignEscapedNewlines: Left
+AlignConsecutiveMacros: true
+AlignTrailingComments: true
