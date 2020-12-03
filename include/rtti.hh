@@ -37,7 +37,7 @@ namespace RTTI {
          * Returns the type identifier of the type T.
          * @returns Type identifier
          */
-        static constexpr TypeId Id() {
+        static TypeId Id() {
             return reinterpret_cast<TypeId>(&Id);
         }
     };
