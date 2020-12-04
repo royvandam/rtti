@@ -5,9 +5,10 @@ set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 
 # Build options
-option(ENABLE_DOCS             "Enable documentation target" OFF)
-option(ENABLE_CODE_COVERAGE    "Enable code coverage generation" OFF)
-option(BUILD_TESTS             "Build unittest binaries" ON)
+option(ENABLE_DOCS             "Enable documentation target"        OFF)
+option(ENABLE_CODE_COVERAGE    "Enable code coverage generation"    OFF)
+option(BUILD_TESTS             "Build unittest binary"              ON)
+option(BUILD_BENCHMARK         "Build benchmark binary"             ON)
 
 # CXX compilation options
 set(CMAKE_CXX_STANDARD 17)
@@ -56,4 +57,10 @@ if (BUILD_TESTS)
     enable_testing()
     include(googletest)
     add_subdirectory(tests)
+endif()
+
+# Benchmark
+if (BUILD_BENCHMARK)
+    include(googlebenchmark)
+    add_subdirectory(benchmark)
 endif()

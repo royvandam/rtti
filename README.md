@@ -52,3 +52,25 @@ int main() {
 }
 
 ```
+
+---
+
+## Benchmark Results
+
+```
+roy@desktop:~/Projects/rtti$ ./build/benchmark/rtti-benchmark 
+2020-12-04T09:47:46+01:00
+Running ./build/benchmark/rtti-benchmark
+Run on (6 X 4300 MHz CPU s)
+CPU Caches:
+  L1 Data 32 KiB (x6)
+  L1 Instruction 32 KiB (x6)
+  L2 Unified 256 KiB (x6)
+  L3 Unified 9216 KiB (x1)
+Load Average: 0.67, 0.81, 0.98
+------------------------------------------------------------
+Benchmark                  Time             CPU   Iterations
+------------------------------------------------------------
+NativeDynamicCast        123 ns          123 ns      5585135
+RttiDynamicCast         1.92 ns         1.92 ns    364474077
+```
