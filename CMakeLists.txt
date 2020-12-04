@@ -34,11 +34,20 @@ if(ENABLE_CODE_COVERAGE)
     append_coverage_compiler_flags()
 endif()
 
-# The library
-add_library(rtti STATIC ${CMAKE_CURRENT_SOURCE_DIR}/include/rtti.hh)
+# Library
+set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/rtti.hh)
+add_library(rtti STATIC ${SOURCES})
 target_include_directories(rtti PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set_target_properties(rtti PROPERTIES LINKER_LANGUAGE CXX)
-clang_format(rtti ${CMAKE_CURRENT_SOURCE_DIR}/include/rtti.hh)
+clang_format(rtti ${SOURCES})
+
+# Configure install targets
+include(GNUInstallDirs)
+install(DIRECTORY include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILES_MATCHING PATTERN "*.hh"
+)
+
 
 # Documentation
 if (ENABLE_DOCS)
