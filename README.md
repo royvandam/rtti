@@ -4,11 +4,9 @@ If you have ever attempted to use the C++'s build in RTTI on a resource constrai
 
  - Automatic ID generation
  - Multiple inheritance (no diamond ¯\\_(ツ)_/¯)
- - Dynamic casting (supports pointer offsets<sup>[2]</sup>)
+ - Dynamic casting
 
 [1] https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html
-
-[2] It works for the defined test cases, but needs to be proven at large.
 
 ---
 
@@ -53,13 +51,10 @@ int main() {
 
 ```
 
----
 
 ## Benchmark Results
 
 ```
-roy@desktop:~/Projects/rtti$ ./build/benchmark/rtti-benchmark 
-2020-12-04T09:47:46+01:00
 Running ./build/benchmark/rtti-benchmark
 Run on (6 X 4300 MHz CPU s)
 CPU Caches:
@@ -74,3 +69,7 @@ Benchmark                  Time             CPU   Iterations
 NativeDynamicCast        123 ns          123 ns      5585135
 RttiDynamicCast         1.92 ns         1.92 ns    364474077
 ```
+
+## Contribute
+
+Found a bug/mistake or have any other means you want to contribute? Feel free to open an issue or pull request! :)
