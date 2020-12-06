@@ -31,9 +31,9 @@ static void RttiDynamicCast(benchmark::State& state) {
     InvalidCast *invalid;
 
     for (auto _ : state) {
-        benchmark::DoNotOptimize(gpa = c.cast<GrandParentA*>());
-        benchmark::DoNotOptimize(gpb = gpa->cast<GrandParentB*>());
-        benchmark::DoNotOptimize(invalid = c.cast<InvalidCast*>());
+        benchmark::DoNotOptimize(gpa = c.cast<GrandParentA>());
+        benchmark::DoNotOptimize(gpb = gpa->cast<GrandParentB>());
+        benchmark::DoNotOptimize(invalid = c.cast<InvalidCast>());
     }
 }
 BENCHMARK(RttiDynamicCast);

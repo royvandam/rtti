@@ -15,7 +15,7 @@ If you have ever attempted to use the C++'s build in RTTI on a resource constrai
 
 Add `-fno-rtti` to your compile options in order to disable C++'s build in RTTI.
 
-The RTTI::Base class describes provides the implementation for performing RTTI checks and casts on the highest member of the class hierarchy. The RTTI::Extends class template provides an implementation for classes derived from RTTI::Base. Both the RTTI::Base and RTTI::Extends use the “Curiously Recurring Template Idiom”, taking the class being defined as its first template argument and the parent class as the second argument. Note that RTTI::Extends support multiple inheritance by allowing the pass a variadic number of parent classes. All parent classes passed need to be derived from either a RTTI::Base or RTTI::Extends in this case. It is possible to mixin types without RTTI, but this needs to be done outside of the template arguments.
+The `RTTI::Type` class describes an interface for performing RTTI checks and type casting from which the `RTTI::Base` class virtually derives to provides the implementation for the highest member of the class hierarchy. The `RTTI::Extends` class template provides the implementation for classes derived from `RTTI::Base`. Both the `RTTI::Base` and `RTTI::Extends` use the “Curiously Recurring Template Idiom”, taking the class being defined as its first template argument and the parent class as the second argument. Note that `RTTI::Extends` support multiple inheritance by allowing to pass a variadic number of parent classes. All parent classes passed need to be derived from either a `RTTI::Base` or `RTTI::Extends` in this case. It is possible to mixin types that are not part of an RTTI hierarchy, but this needs to be done outside of the template arguments.
 
 Basic usage example:
 
@@ -31,19 +31,19 @@ int main() {
     SpecialCircle c;
     Shape* shape = &c;
 
-    if (shape->isA(TypeInfo<Circle>::Id()) {
+    if (shape->is<Circle>()) {
         std::cout << "Yep, the shape is a circle!" << std::endl;
     }
 
-    if (auto circle = shape->cast<Circle*>()) {
+    if (auto circle = shape->cast<Circle>()) {
         std::cout << "Woot, we have a circle! \0/" << std::endl;
     }
 
-    if (shape->cast<Square*>() == nullptr) {
+    if (shape->cast<Square>() == nullptr) {
         std::cout << "No, it is not a square... :(" << std::endl;        
     }
 
-    if (auto base = shape->cast<SpecialBase*>()) {
+    if (auto base = shape->cast<SpecialBase>()) {
         std::cout << "The shape can also be cast to the special base class." << std::endl;
     }
 
@@ -52,6 +52,29 @@ int main() {
 
 ```
 
+Note that the `RTTI::TypeInfo<T>::Id()` method can also be used to identify any other types not part of an RTTI hierarchy, for example a very basic interface and implementation of a variant type:
+
+```c++
+struct AnyVariant {
+    virtual ~AnyVariant() {}
+    virtual RTTI::TypeId valueTypeId() const noexcept =0;
+};
+
+template<typename T>
+struct Variant : AnyVariant {
+    T value;
+
+    virtual RTTI::TypeId valueTypeId() const noexcept override {
+        return RTTI::TypeInfo<T>::Id();
+    }
+};
+
+void testValueTypeId() {
+    Variant<int> v;
+    assert(v.valueTypeId() == TypeInfo<int>::Id());
+    assert(v.valueTypeId() != TypeInfo<bool>::Id());
+}
+```
 
 ## Benchmark Results
 
