@@ -5,6 +5,7 @@ If you have ever attempted to use the C++'s build in RTTI on a resource constrai
  - Automatic ID generation
  - Multiple inheritance (no diamond ¯\\_(ツ)_/¯)
  - Dynamic casting
+ - No macros, external dependencies :)
 
 [1] https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html
 
