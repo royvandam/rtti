@@ -1,6 +1,8 @@
-add_executable(tests ${CMAKE_CURRENT_SOURCE_DIR}/rtti_test.cc)
+file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/*_test.cc)
+
+add_executable(tests ${SOURCES})
 target_link_libraries(tests PUBLIC rtti gmock gtest gtest_main pthread)
-clang_format(tests ${CMAKE_CURRENT_SOURCE_DIR}/rtti_test.cc)
+clang_format(tests ${SOURCES})
 
 add_dependencies(tests googletest-external)
 gtest_discover_tests(tests)

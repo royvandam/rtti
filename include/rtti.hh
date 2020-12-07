@@ -31,6 +31,11 @@
 namespace RTTI {
     using TypeId = uintptr_t;
 
+    namespace Detail {
+        template<typename T>
+        struct Type { static constexpr int Id = 0; };
+    }
+
     template <typename T>
     struct TypeInfo {
         /**
@@ -38,7 +43,8 @@ namespace RTTI {
          * @returns Type identifier
          */
         static TypeId Id() {
-            return reinterpret_cast<TypeId>(&Id);
+            return reinterpret_cast<TypeId>(
+                &Detail::Type<std::remove_const_t<std::remove_reference_t<T>>>::Id);
         }
     };
 
