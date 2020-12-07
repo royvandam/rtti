@@ -10,8 +10,7 @@ namespace {
     struct ChildA : RTTI::Extends<ChildA, ParentA> {};
 
     struct ExtendedBase : RTTI::Base<ExtendedBase> {};
-    struct ExtendedChildA : RTTI::Extends<ExtendedChildA, ChildA, ExtendedBase> {
-    };
+    struct ExtendedChildA : RTTI::Extends<ExtendedChildA, ChildA, ExtendedBase> {};
 
     class RTTITest : public ::testing::Test {};
 
@@ -86,7 +85,6 @@ namespace {
         EXPECT_EQ(type->cast<ChildA>(), &child_a);
         EXPECT_EQ(type->cast<ParentA>(), parent);
         EXPECT_EQ(type->cast<ChildB>(), nullptr);
-
     }
 
 }  // namespace

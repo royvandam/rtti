@@ -1,4 +1,5 @@
 #include <benchmark/benchmark.h>
+
 #include <rtti.hh>
 
 struct GrandParentA : RTTI::Base<GrandParentA> {};
@@ -10,10 +11,12 @@ struct Class : RTTI::Extends<Class, ParentA, ParentB> {
 };
 struct InvalidCast {};
 
-static void NativeDynamicCast(benchmark::State& state) {
+static void
+NativeDynamicCast(benchmark::State& state) {
     Class c;
-    GrandParentA* gpa; GrandParentB* gpb;
-    InvalidCast *invalid;
+    GrandParentA* gpa;
+    GrandParentB* gpb;
+    InvalidCast* invalid;
 
     for (auto _ : state) {
         benchmark::DoNotOptimize(gpa = dynamic_cast<GrandParentA*>(&c));
@@ -25,10 +28,12 @@ static void NativeDynamicCast(benchmark::State& state) {
 BENCHMARK(NativeDynamicCast);
 
 // Define another benchmark
-static void RttiDynamicCast(benchmark::State& state) {
+static void
+RttiDynamicCast(benchmark::State& state) {
     Class c;
-    GrandParentA* gpa; GrandParentB* gpb;
-    InvalidCast *invalid;
+    GrandParentA* gpa;
+    GrandParentB* gpb;
+    InvalidCast* invalid;
 
     for (auto _ : state) {
         benchmark::DoNotOptimize(gpa = c.cast<GrandParentA>());

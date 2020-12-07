@@ -46,13 +46,13 @@ namespace RTTI {
      * Abstract base interface for types part of an open RTTI hierarchy.
      */
     struct Type {
-        virtual ~Type() {};
+        virtual ~Type(){};
 
         /**
          * Returns the type identifier of the object.
          * @returns Type identifier
          */
-        virtual TypeId typeId() const noexcept =0;
+        virtual TypeId typeId() const noexcept = 0;
 
         /**
          * Checks whether the object is a direct or derived instance of
@@ -60,7 +60,7 @@ namespace RTTI {
          * @tparam The identifier to compare with.
          * @returns True in case a match was found.
          */
-        virtual bool isById(TypeId typeId) const noexcept =0;
+        virtual bool isById(TypeId typeId) const noexcept = 0;
 
         /**
          * Checks whether the object is a direct or derived instance of
@@ -97,7 +97,6 @@ namespace RTTI {
         }
 
     protected:
-
         /**
          * Used to invoke the _dynamic_cast from the most specialized type in the
          * dependency hierarchy by overloaded this function in each derivation of
@@ -107,14 +106,14 @@ namespace RTTI {
          * direct descendance of the type identified by the passed type id. Otherwise
          * the value returned is a nullptr.
          */
-        virtual void *_cast(TypeId typeId) noexcept =0;
-        virtual void const*_cast(TypeId typeId) const noexcept =0;
+        virtual void* _cast(TypeId typeId) noexcept = 0;
+        virtual void const* _cast(TypeId typeId) const noexcept = 0;
     };
 
     /**
      * Parent type for types at the base of an open RTTI hierarchy
      */
-    template<typename This>
+    template <typename This>
     struct Base : virtual Type {
         virtual ~Base() {}
 
@@ -127,8 +126,8 @@ namespace RTTI {
         }
 
     protected:
-        virtual void *_cast(TypeId typeId) noexcept override {
-            return const_cast<void *>(_dynamic_cast(typeId, static_cast<This const*>(this)));
+        virtual void* _cast(TypeId typeId) noexcept override {
+            return const_cast<void*>(_dynamic_cast(typeId, static_cast<This const*>(this)));
         }
         virtual void const* _cast(TypeId typeId) const noexcept override {
             return _dynamic_cast(typeId, static_cast<This const*>(this));
@@ -168,15 +167,15 @@ namespace RTTI {
         }
 
     protected:
-        virtual void *_cast(TypeId typeId) noexcept override {
-            return const_cast<void *>(_dynamic_cast(typeId, static_cast<This const*>(this)));
+        virtual void* _cast(TypeId typeId) noexcept override {
+            return const_cast<void*>(_dynamic_cast(typeId, static_cast<This const*>(this)));
         }
-        virtual void const*_cast(TypeId typeId) const noexcept override {
+        virtual void const* _cast(TypeId typeId) const noexcept override {
             return _dynamic_cast(typeId, static_cast<This const*>(this));
         }
 
         template <typename T>
-        static void const*_dynamic_cast(TypeId typeId, T const* ptr) noexcept {
+        static void const* _dynamic_cast(TypeId typeId, T const* ptr) noexcept {
             // Check whether the current type matches the requested type.
             if (TypeInfo<This>::Id() == typeId) {
                 // Cast the passed pointer in to the current type and stop
@@ -186,7 +185,8 @@ namespace RTTI {
 
             // The current type does not match, recursively invoke the method
             // for all directly related parent types.
-            std::array<void const*, sizeof...(Parents)> ptrs = {Parents::_dynamic_cast(typeId, ptr)...};
+            std::array<void const*, sizeof...(Parents)> ptrs = {
+                Parents::_dynamic_cast(typeId, ptr)...};
 
             // Check whether the traversal up the dependency hierarchy returned a pointer
             // that is not null.
