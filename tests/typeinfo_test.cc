@@ -5,31 +5,35 @@
 
 using namespace RTTI;
 
-TEST(TypeInfo, ImplementsNativeBehaviour) {
-    // Same types are equal
+TEST(TypeInfo, SameTypesAreEqual) {
     EXPECT_EQ(typeid(int), typeid(int));
     EXPECT_EQ(TypeInfo<int>::Id(), TypeInfo<int>::Id());
+}
 
-    // Different types are not equal
+TEST(TypeInfo, DifferentTypesAreNotEqual) {
     EXPECT_NE(typeid(int), typeid(bool));
     EXPECT_NE(TypeInfo<int>::Id(), TypeInfo<bool>::Id());
+}
 
-    // Pointer types are not equal
+TEST(TypeInfo, TypesAndPointerToTypesAreNotEqual) {
     EXPECT_NE(typeid(int), typeid(int*));
     EXPECT_NE(TypeInfo<int>::Id(), TypeInfo<int*>::Id());
+}
 
-    // Pointer and const pointer type are not equal
+TEST(TypeInfo, PointerAndConstPointerTypesAreNotEqual) {
     EXPECT_NE(typeid(int*), typeid(int const*));
     EXPECT_NE(TypeInfo<int>::Id(), TypeInfo<int const*>::Id());
+}
 
-    // Typeid strips const
+TEST(TypeInfo, NonConstAndConstTypesAreEqual) {
     EXPECT_EQ(typeid(int), typeid(int const));
     EXPECT_EQ(TypeInfo<int>::Id(), TypeInfo<int const>::Id());
 
     EXPECT_EQ(typeid(int*), typeid(int* const));
     EXPECT_EQ(TypeInfo<int*>::Id(), TypeInfo<int* const>::Id());
+}
 
-    // Typeid strips references
+TEST(TypeInfo, TypesAndReferencesToTypesAreEqual) {
     EXPECT_EQ(typeid(int), typeid(int&));
     EXPECT_EQ(TypeInfo<int>::Id(), TypeInfo<int&>::Id());
 
