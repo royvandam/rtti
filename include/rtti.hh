@@ -184,17 +184,35 @@ namespace RTTI {
                 return static_cast<This const*>(ptr);
             }
 
-            // Current type does not match, recursively invoke the method
+            // The current type does not match, recursively invoke the method
             // for all directly related parent types.
             std::array<void const*, sizeof...(Parents)> ptrs = {Parents::_dynamic_cast(typeId, ptr)...};
 
-            // Check whether the traversal up the dependency hierarchy returned
-            // a pointer that is not null.
+            // Check whether the traversal up the dependency hierarchy returned a pointer
+            // that is not null.
             for (auto ptr : ptrs) {
                 if (ptr != nullptr) {
                     return ptr;
                 }
             }
+
+            // Optionally a less naive implemenation was proposed by reddit user /u/matthieum that
+            // lazily calls the casters one by one. However initial tests have shown that for small
+            // hierarchies this is roughly 10x slower that the naive implementation. Likely due to
+            // the compiler being able to inline everything in this case.
+            //
+            // using DynamicCast = void *(*)(TypeId, T*);
+            // static std::array<DynamicCast, sizeof...(Parents)> const casters {
+            //     [](TypeId typeId, T *ptr) {
+            //         return Parents::_dynamic_cast(typeId, ptr);
+            //     }...
+            // };
+            //
+            // for (auto caster : casters) {
+            //     if (auto result = caster(typeId, ptr)) {
+            //         return result;
+            //     }
+            // }
 
             // No match found.
             return nullptr;

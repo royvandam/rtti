@@ -48,7 +48,6 @@ install(DIRECTORY include/
     FILES_MATCHING PATTERN "*.hh"
 )
 
-
 # Documentation
 if (ENABLE_DOCS)
     find_package(Doxygen REQUIRED dot mscgen dia)
