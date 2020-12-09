@@ -1,7 +1,8 @@
 file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/*_test.cc)
 
 add_executable(tests ${SOURCES})
-target_link_libraries(tests PUBLIC rtti gmock gtest gtest_main pthread)
+target_link_libraries(tests PRIVATE rtti gmock gtest gtest_main pthread)
+target_include_directories(tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 clang_format(tests ${SOURCES})
 
 add_dependencies(tests googletest-external)

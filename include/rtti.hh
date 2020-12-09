@@ -29,6 +29,10 @@
 #include <type_traits>
 
 namespace RTTI {
+    /// Forward declaration of the Enable base.
+    struct Enable;
+
+    /// TypeId type definition
     using TypeId = uintptr_t;
 
     namespace Detail {
@@ -36,29 +40,83 @@ namespace RTTI {
         struct Type { static constexpr int Id = 0; };
     }
 
-    template <typename T>
+    /**
+     * Static typeinfo structure for registering types and accessing their information.
+     */
+    template <typename This, typename... Parents>
     struct TypeInfo {
+        /// Ensure all passed parrents are basses of this type.
+        static_assert((... && std::is_base_of_v<Parents, This>));
+
+        /// Ensure all passed parrents have RTTI enabled.
+        static_assert((... && std::is_base_of_v<Enable, Parents>));
+
         /**
          * Returns the type identifier of the type T.
          * @returns Type identifier
          */
-        static TypeId Id() {
+        static TypeId Id() noexcept {
             return reinterpret_cast<TypeId>(
-                &Detail::Type<std::remove_const_t<std::remove_reference_t<T>>>::Id);
+                &Detail::Type<std::remove_const_t<std::remove_reference_t<This>>>::Id);
+        }
+
+        /**
+         * Checks whether the passed type is the same or a parent of the type.
+         * @tparam The type to compare the identifier with.
+         * @returns True in case a match was found.
+         */
+        static bool Is(TypeId typeId) noexcept {
+            return (Id() == typeId) || (... || (Parents::TypeInfo::Is(typeId)));
+        }
+
+        /**
+         * Walks the dependency hierarchy of the object in search of the type identified
+         * by the passed type id. In case found casts the passed pointer into the passed
+         * type. If no match can be found the function returns a nullptr.
+         * @tparam T The type of the most specialized type in the dependency hierarchy.
+         * @param typeId The identifier of the type to cast the object into.
+         * @returns Valid pointer to instance of requested type if the object is a
+         * direct descendance of the type identified by the passed type id. Otherwise
+         * the value returned is a nullptr.
+         */
+        template <typename T>
+        static void const* DynamicCast(TypeId typeId, T const* ptr) noexcept {
+            // Check whether the current type matches the requested type.
+            if (Id() == typeId) {
+                // Cast the passed pointer in to the current type and stop
+                // the recursion.
+                return static_cast<This const*>(ptr);
+            }
+
+            // The current type does not match, recursively invoke the method
+            // for all directly related parent types.
+            std::array<void const*, sizeof...(Parents)> ptrs = {
+                Parents::TypeInfo::DynamicCast(typeId, ptr)...};
+
+            // Check whether the traversal up the dependency hierarchy returned a pointer
+            // that is not null.
+            for (auto ptr : ptrs) {
+                if (ptr != nullptr) {
+                    return ptr;
+                }
+            }
+
+            // No match found.
+            return nullptr;
         }
     };
 
     /**
-     * Abstract base interface for types part of an open RTTI hierarchy.
+     * Parent type for types at the base of an open RTTI hierarchy
      */
-    struct Type {
-        virtual ~Type(){};
+    struct Enable {
+        virtual ~Enable() {}
 
         /**
          * Returns the type identifier of the object.
          * @returns Type identifier
          */
-        virtual TypeId typeId() const noexcept = 0;
+        virtual TypeId typeId() const noexcept =0;
 
         /**
          * Checks whether the object is a direct or derived instance of
@@ -66,16 +124,16 @@ namespace RTTI {
          * @tparam The identifier to compare with.
          * @returns True in case a match was found.
          */
-        virtual bool isById(TypeId typeId) const noexcept = 0;
+        virtual bool isById(TypeId typeId) const noexcept =0;
 
         /**
-         * Checks whether the object is a direct or derived instance of
-         * the type identified by the passed identifier.
+         * Checks whether the object is an instance of child instance of
+         * the passed type.
          * @tparam The type to compare the identifier with.
          * @returns True in case a match was found.
          */
         template <typename T>
-        bool is() const noexcept {
+        bool is() noexcept {
             return isById(TypeInfo<T>::Id());
         }
 
@@ -94,12 +152,12 @@ namespace RTTI {
          */
         template <typename T>
         T* cast() noexcept {
-            return static_cast<T*>(_cast(TypeInfo<T>::Id()));
+            return reinterpret_cast<T*>(const_cast<void*>(_cast(TypeInfo<T>::Id())));
         }
 
         template <typename T>
         T const* cast() const noexcept {
-            return static_cast<T const*>(_cast(TypeInfo<T>::Id()));
+            return reinterpret_cast<T const*>(_cast(TypeInfo<T>::Id()));
         }
 
     protected:
@@ -112,116 +170,29 @@ namespace RTTI {
          * direct descendance of the type identified by the passed type id. Otherwise
          * the value returned is a nullptr.
          */
-        virtual void* _cast(TypeId typeId) noexcept = 0;
         virtual void const* _cast(TypeId typeId) const noexcept = 0;
     };
-
-    /**
-     * Parent type for types at the base of an open RTTI hierarchy
-     */
-    template <typename This>
-    struct Base : virtual Type {
-        virtual ~Base() {}
-
-        virtual TypeId typeId() const noexcept {
-            return TypeInfo<This>::Id();
-        }
-
-        virtual bool isById(TypeId typeId) const noexcept {
-            return TypeInfo<This>::Id() == typeId;
-        }
-
-    protected:
-        virtual void* _cast(TypeId typeId) noexcept override {
-            return const_cast<void*>(_dynamic_cast(typeId, static_cast<This const*>(this)));
-        }
-        virtual void const* _cast(TypeId typeId) const noexcept override {
-            return _dynamic_cast(typeId, static_cast<This const*>(this));
-        }
-
-        /**
-         * Walks the dependency hierarchy of the object in search of the type identified
-         * by the passed type id. In case found casts the passed pointer into the passed
-         * type. If no match can be found the function returns a nullptr.
-         * @tparam T The type of the most specialized type in the dependency hierarchy.
-         * @param typeId The identifier of the type to cast the object into.
-         * @returns Valid pointer to instance of requested type if the object is a
-         * direct descendance of the type identified by the passed type id. Otherwise
-         * the value returned is a nullptr.
-         */
-        template <typename T>
-        static void const* _dynamic_cast(TypeId typeId, T const* ptr) noexcept {
-            if (TypeInfo<This>::Id() == typeId) {
-                return static_cast<This const*>(ptr);
-            }
-            return nullptr;
-        }
-    };
-
-    /**
-     * Parent type for types part of an open RTTI hierarchy that are not types at the base
-     * of the hierarchy.
-     */
-    template <typename This, typename... Parents>
-    struct Extends : public Parents... {
-        virtual TypeId typeId() const noexcept override {
-            return TypeInfo<This>::Id();
-        }
-
-        virtual bool isById(TypeId typeId) const noexcept override {
-            return (TypeInfo<This>::Id() == typeId) || (... || Parents::isById(typeId));
-        }
-
-    protected:
-        virtual void* _cast(TypeId typeId) noexcept override {
-            return const_cast<void*>(_dynamic_cast(typeId, static_cast<This const*>(this)));
-        }
-        virtual void const* _cast(TypeId typeId) const noexcept override {
-            return _dynamic_cast(typeId, static_cast<This const*>(this));
-        }
-
-        template <typename T>
-        static void const* _dynamic_cast(TypeId typeId, T const* ptr) noexcept {
-            // Check whether the current type matches the requested type.
-            if (TypeInfo<This>::Id() == typeId) {
-                // Cast the passed pointer in to the current type and stop
-                // the recursion.
-                return static_cast<This const*>(ptr);
-            }
-
-            // The current type does not match, recursively invoke the method
-            // for all directly related parent types.
-            std::array<void const*, sizeof...(Parents)> ptrs = {
-                Parents::_dynamic_cast(typeId, ptr)...};
-
-            // Check whether the traversal up the dependency hierarchy returned a pointer
-            // that is not null.
-            for (auto ptr : ptrs) {
-                if (ptr != nullptr) {
-                    return ptr;
-                }
-            }
-
-            // Optionally a less naive implemenation was proposed by reddit user /u/matthieum that
-            // lazily calls the casters one by one. However initial tests have shown that for small
-            // hierarchies this is roughly 10x slower that the naive implementation. Likely due to
-            // the compiler being able to inline everything in this case.
-            //
-            // using DynamicCast = void *(*)(TypeId, T*);
-            // static std::array<DynamicCast, sizeof...(Parents)> const casters {
-            //     [](TypeId typeId, T *ptr) {
-            //         return Parents::_dynamic_cast(typeId, ptr);
-            //     }...
-            // };
-            //
-            // for (auto caster : casters) {
-            //     if (auto result = caster(typeId, ptr)) {
-            //         return result;
-            //     }
-            // }
-
-            // No match found.
-            return nullptr;
-        }
-    };
 }  // namespace RTTI
+
+/**
+ * Macro to be called in the body of each type declaration that is to be part of an
+ * open hierarchy RTTI structure. The type itself or one or more parents of the type
+ * need to have been derived from RTTI::Enable.
+ * @param T The type it self.
+ * @param Parents Variadic number of direct parrent types of the type
+ */
+#define RTTI_DECLARE_TYPEINFO(T, ...)                                            \
+    public:                                                                      \
+        using TypeInfo = RTTI::TypeInfo<T, ##__VA_ARGS__>;                       \
+        virtual RTTI::TypeId typeId() const noexcept override {                  \
+            return TypeInfo::Id();                                               \
+        }                                                                        \
+        virtual bool isById(RTTI::TypeId typeId) const noexcept override {       \
+            return TypeInfo::Is(typeId);                                         \
+        }                                                                        \
+    protected:                                                                   \
+        virtual void const* _cast(RTTI::TypeId typeId) const noexcept override { \
+            return TypeInfo::DynamicCast(typeId, this);                          \
+        }
+
+        

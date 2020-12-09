@@ -1,11 +1,16 @@
 # Hand rolled open-hierarchy RTTI for C++17 and up.
 
-If you have ever attempted to use the C++'s build in RTTI on a resource constrained (embedded) system you will most likely have noticed it is massively inefficient. Hence this implementation of a hand-rolled form of RTTI which is much more efficient and flexible, although it requires a bit more work from you as a class author. It is inspired by the guidelines defined for RTTI by the LLVM project<sup>[1]</sup> but with the extension that it supports:
+If you have ever attempted to use the C++'s build in RTTI on a resource constrained (embedded) system you will most likely have noticed it is massively inefficient. Hence this implementation of a hand-rolled form of RTTI which is much more efficient and flexible, although it requires a bit more work from you as a class author. The current implementation supports the following features:
 
  - Automatic ID generation
- - Multiple inheritance (no diamond ¯\\_(ツ)_/¯)
- - Dynamic casting
- - No macros, external dependencies :)
+ - Multiple inheritance, including virtual
+ - Full dynamic casting
+ - Parent constructors are accessible
+ - No external dependencies, single header
+ - Static asserts on the parents passed to TypeInfo structure.
+ - One convenience marco ¯\\_(ツ)_/¯
+
+Note: This project was initially inspired by open-hierarchy examples in the guidelines defined for RTTI by the LLVM project<sup>[1]</sup>. However this solution has one major drawback which is that the parent constructors are no longer accessible given that RTTI classes are injected in between the parent and child. The initial (working) implementation based on this design is still available for reference under git tag `llvm-style-inheritance`.
 
 [1] https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html
 
@@ -13,38 +18,48 @@ If you have ever attempted to use the C++'s build in RTTI on a resource constrai
 
 ## How to use
 
-Add `-fno-rtti` to your compile options in order to disable C++'s build in RTTI.
+ - Add `-fno-rtti` to your compile options in order to disable C++'s build in RTTI. (Optional, as it can work in conjunction with native RTTI)
+ - The `RTTI::Enable` class the describes the abstract interface for performing runtime RTTI checks and type casing and is to be virtually derived from by the highest member(s) in the class hierarchy. For each type part of the hierarchy the `RTTI_DECLARE_TYPEINFO(Type, Parents...)` macro should be called to define an alias to `RTTI::TypeInfo` and overload the virtual methods of the interface described by `RTTI::Enable`.
+ - The `RTTI::TypeInfo` class defines the type information and a describes the static interface for performing RTTI checks and type casting. It uses the “Curiously Recurring Template Idiom”, taking the class being defined as its first template argument and optionally the parent classes as the arguments there after.
 
-The `RTTI::Type` class describes an interface for performing RTTI checks and type casting from which the `RTTI::Base` class virtually derives to provides the implementation for the highest member of the class hierarchy. The `RTTI::Extends` class template provides the implementation for classes derived from `RTTI::Base`. Both the `RTTI::Base` and `RTTI::Extends` use the “Curiously Recurring Template Idiom”, taking the class being defined as its first template argument and the parent class as the second argument. Note that `RTTI::Extends` support multiple inheritance by allowing to pass a variadic number of parent classes. All parent classes passed need to be derived from either a `RTTI::Base` or `RTTI::Extends` in this case. It is possible to mixin types that are not part of an RTTI hierarchy, but this needs to be done outside of the template arguments.
-
-Basic usage example:
+### Basic example:
 
 ```c++
-struct Shape : RTTI::Base<Shape> {};
-struct Square : RTTI::Extends<Square, Shape> {};
-struct Circle : RTTI::Extends<Circle, Shape> {};
+struct Shape : virtual RTTI::Enable {
+    RTTI_DECLARE_TYPEINFO(Shape);
+};
 
-struct SpecialBase : RTTI::Base<SpecialBase> {};
-struct SpecialCircle : RTTI::Extends<SpecialCircle, Circle, SpecialBase> {};
+struct Square : Shape {
+    RTTI_DECLARE_TYPEINFO(Square, Shape);
+};
+
+struct OtherParent : virtual RTTI::Enable {
+    RTTI_DECLARE_TYPEINFO(OtherParent);
+}
+
+struct Circle : Shape, OtherParent {
+    RTTI_DECLARE_TYPEINFO(Circle, Shape, OtherParent);
+};
 
 int main() {
-    SpecialCircle c;
+    Circle c;
     Shape* shape = &c;
 
     if (shape->is<Circle>()) {
-        std::cout << "Yep, the shape is a circle!" << std::endl;
-    }
-
-    if (auto circle = shape->cast<Circle>()) {
-        std::cout << "Woot, we have a circle! \0/" << std::endl;
+        std::cout << "Yes, the shape is a circle!" << std::endl;
     }
 
     if (shape->cast<Square>() == nullptr) {
-        std::cout << "No, it is not a square... :(" << std::endl;        
+        std::cout << "No, it was not a square... :(" << std::endl;        
     }
 
-    if (auto base = shape->cast<SpecialBase>()) {
-        std::cout << "The shape can also be cast to the special base class." << std::endl;
+    if (auto circle = shape->cast<Circle>()) {
+        std::cout << "Woot, we have the circle back! \\0/" << std::endl;
+    }
+
+    OtherParent *p = &c;
+    if (auto s = p->cast<Shape>()) {
+        std::cout << "Pointer offsets are take into account for multiple inheritance hierarchies." << std::endl;
     }
 
     return 0;
@@ -86,12 +101,12 @@ CPU Caches:
   L1 Instruction 32 KiB (x6)
   L2 Unified 256 KiB (x6)
   L3 Unified 9216 KiB (x1)
-Load Average: 0.67, 0.81, 0.98
+Load Average: 0.48, 0.26, 0.17
 ------------------------------------------------------------
 Benchmark                  Time             CPU   Iterations
 ------------------------------------------------------------
-NativeDynamicCast        123 ns          123 ns      5585135
-RttiDynamicCast         1.92 ns         1.92 ns    364474077
+NativeDynamicCast        133 ns          133 ns      5252735
+RttiDynamicCast         6.08 ns         6.08 ns    114135771
 ```
 
 ## Contribute
