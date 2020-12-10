@@ -7,7 +7,6 @@ ExternalProject_Add(googletest-external
     INSTALL_DIR       ${EXTERNAL_INSTALL_DIR}
     CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
                       -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
-                      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
 )
 
 # Prevent overriding the parent project's compiler/linker settings on Windows
