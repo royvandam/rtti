@@ -14,7 +14,9 @@ struct ParentB : virtual GrandParent {
     RTTI_DECLARE_TYPEINFO(ParentB, GrandParent);
 };
 
-struct Child : ParentA, ParentB {
+struct Child
+    : ParentA
+    , ParentB {
     RTTI_DECLARE_TYPEINFO(Child, ParentA, ParentB);
 };
 
@@ -28,10 +30,10 @@ NativeDynamicCast(benchmark::State& state) {
         GrandParent* g;
         benchmark::DoNotOptimize(g = dynamic_cast<GrandParent*>(&c));
 
-        ParentA *pa;
+        ParentA* pa;
         benchmark::DoNotOptimize(pa = dynamic_cast<ParentA*>(g));
 
-        ParentB *pb;
+        ParentB* pb;
         benchmark::DoNotOptimize(pb = dynamic_cast<ParentB*>(g));
 
         InvalidCast* invalid;
@@ -48,10 +50,10 @@ RttiDynamicCast(benchmark::State& state) {
         GrandParent* g;
         benchmark::DoNotOptimize(g = c.cast<GrandParent>());
 
-        ParentA *pa;
+        ParentA* pa;
         benchmark::DoNotOptimize(pa = g->cast<ParentA>());
 
-        ParentB *pb;
+        ParentB* pb;
         benchmark::DoNotOptimize(pb = g->cast<ParentB>());
 
         InvalidCast* invalid;

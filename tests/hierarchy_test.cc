@@ -14,11 +14,15 @@ struct ParentB : virtual GrandParent {
     RTTI_DECLARE_TYPEINFO(ParentB, GrandParent);
 };
 
-struct ChildA : ParentA, ParentB {
+struct ChildA
+    : ParentA
+    , ParentB {
     RTTI_DECLARE_TYPEINFO(ChildA, ParentA, ParentB);
 };
 
-struct ChildB : ParentA, ParentB {
+struct ChildB
+    : ParentA
+    , ParentB {
     RTTI_DECLARE_TYPEINFO(ChildB, ParentA, ParentB);
 };
 
