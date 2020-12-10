@@ -95,14 +95,10 @@ namespace RTTI {
 
             // Check whether the traversal up the dependency hierarchy returned a pointer
             // that is not null.
-            for (auto ptr : ptrs) {
-                if (ptr != nullptr) {
-                    return ptr;
-                }
-            }
-
-            // No match found.
-            return nullptr;
+            auto it = std::find_if(ptrs.begin(), ptrs.end(), [](void const* ptr) {
+                return ptr != nullptr;
+            });
+            return (it != ptrs.end()) ? *it : nullptr;
         }
     };
 
@@ -133,7 +129,7 @@ namespace RTTI {
          * @returns True in case a match was found.
          */
         template <typename T>
-        bool is() noexcept {
+        bool is() const noexcept {
             return isById(TypeInfo<T>::Id());
         }
 
