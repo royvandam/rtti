@@ -22,16 +22,19 @@ struct InvalidCast {};
 
 static void
 NativeDynamicCast(benchmark::State& state) {
-    Child c;
-    GrandParent* g;
-    ParentA *pa;
-    ParentB *pb;
-    InvalidCast* invalid;
-
     for (auto _ : state) {
+        Child c;
+
+        GrandParent* g;
         benchmark::DoNotOptimize(g = dynamic_cast<GrandParent*>(&c));
+
+        ParentA *pa;
         benchmark::DoNotOptimize(pa = dynamic_cast<ParentA*>(g));
+
+        ParentB *pb;
         benchmark::DoNotOptimize(pb = dynamic_cast<ParentB*>(g));
+
+        InvalidCast* invalid;
         benchmark::DoNotOptimize(invalid = dynamic_cast<InvalidCast*>(g));
     }
 }
@@ -39,16 +42,19 @@ BENCHMARK(NativeDynamicCast);
 
 static void
 RttiDynamicCast(benchmark::State& state) {
-    Child c;
-    GrandParent* g;
-    ParentA *pa;
-    ParentB *pb;
-    InvalidCast* invalid;
-
     for (auto _ : state) {
+        Child c;
+
+        GrandParent* g;
         benchmark::DoNotOptimize(g = c.cast<GrandParent>());
+
+        ParentA *pa;
         benchmark::DoNotOptimize(pa = g->cast<ParentA>());
+
+        ParentB *pb;
         benchmark::DoNotOptimize(pb = g->cast<ParentB>());
+
+        InvalidCast* invalid;
         benchmark::DoNotOptimize(invalid = g->cast<InvalidCast>());
     }
 }
