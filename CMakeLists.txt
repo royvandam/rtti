@@ -7,6 +7,7 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 # Build options
 option(ENABLE_DOCS             "Enable documentation target"        OFF)
 option(ENABLE_CODE_COVERAGE    "Enable code coverage generation"    OFF)
+option(ENABLE_CODE_ANALYSIS    "Enable static code analysis"        ON)
 option(BUILD_TESTS             "Build unittest binary"              ON)
 option(BUILD_BENCHMARK         "Build benchmark binary"             ON)
 
@@ -25,7 +26,7 @@ set(EXTERNAL_INSTALL_DIR ${PROJECT_BINARY_DIR}/external)
 include_directories(${EXTERNAL_INSTALL_DIR}/include)
 link_directories(${EXTERNAL_INSTALL_DIR}/lib)
 
-# Code formattingh
+# Code formatting
 include(clang-format)
 
 # Code coverage generation
@@ -34,11 +35,26 @@ if(ENABLE_CODE_COVERAGE)
     append_coverage_compiler_flags()
 endif()
 
+# Static code analysis
+if(ENABLE_CODE_ANALYSIS)
+    find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck)
+    if(CMAKE_CXX_CPPCHECK)
+        message(STATUS "Found `cppcheck` enabling static code analysis.")
+        list(
+            APPEND CMAKE_CXX_CPPCHECK
+                "--enable=all"
+                "--suppress=missingIncludeSystem"
+                "--inline-suppr"
+                "--force"
+                "--suppressions-list=${CMAKE_SOURCE_DIR}/.cppcheck-suppressions"
+        )
+    endif()
+endif()
+
 # Library
 set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/rtti.hh)
-add_library(rtti STATIC ${SOURCES})
-target_include_directories(rtti PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set_target_properties(rtti PROPERTIES LINKER_LANGUAGE CXX)
+add_library(rtti INTERFACE)
+target_include_directories(rtti INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 clang_format(rtti ${SOURCES})
 
 # Configure install targets
