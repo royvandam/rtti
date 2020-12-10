@@ -5,11 +5,13 @@ set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 
 # Build options
-option(ENABLE_DOCS             "Enable documentation target"        OFF)
-option(ENABLE_CODE_COVERAGE    "Enable code coverage generation"    OFF)
-option(ENABLE_CODE_ANALYSIS    "Enable static code analysis"        ON)
-option(BUILD_TESTS             "Build unittest binary"              ON)
-option(BUILD_BENCHMARK         "Build benchmark binary"             ON)
+option(ENABLE_DOCS             "Enable documentation target"                OFF)
+option(ENABLE_CODE_COVERAGE    "Enable code coverage generation"            OFF)
+option(ENABLE_CODE_ANALYSIS    "Enable static code analysis"                ON)
+option(ENABLE_CPPCHECK         "Enable cppcheck for static code analysis"   ON)
+option(ENABLE_CLANG_TIDY       "Enable clang-tidy for static code analysis" OFF)
+option(BUILD_TESTS             "Build unittest binary"                      ON)
+option(BUILD_BENCHMARK         "Build benchmark binary"                     ON)
 
 # CXX compilation options
 set(CMAKE_CXX_STANDARD 17)
@@ -37,17 +39,30 @@ endif()
 
 # Static code analysis
 if(ENABLE_CODE_ANALYSIS)
-    find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck)
-    if(CMAKE_CXX_CPPCHECK)
-        message(STATUS "Found `cppcheck` enabling static code analysis.")
-        list(
-            APPEND CMAKE_CXX_CPPCHECK
+    if (ENABLE_CPPCHECK)
+        message(STATUS "Attempting to find code analysis tools:")
+        find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck)
+        if(CMAKE_CXX_CPPCHECK)
+            message(STATUS "- Found `cppcheck`")
+            list(APPEND CMAKE_CXX_CPPCHECK
                 "--enable=all"
                 "--suppress=missingIncludeSystem"
                 "--inline-suppr"
                 "--force"
                 "--suppressions-list=${CMAKE_SOURCE_DIR}/.cppcheck-suppressions"
-        )
+            )
+        endif()
+    endif()
+
+    if (ENABLE_CLANG_TIDY)
+        find_program(CMAKE_CXX_CLANG_TIDY NAMES clang-tidy)
+        if(CMAKE_CXX_CPPCHECK)
+            message(STATUS "- Found `clang-tidy`")
+            list(APPEND CMAKE_CXX_CLANG_TIDY
+                "-header-filter=${CMAKE_SOURCE_DIR}/include"
+                "-checks=*"
+            )
+        endif()
     endif()
 endif()
 
