@@ -77,6 +77,18 @@ namespace {
         EXPECT_EQ(childA.cast<GrandParent>(), static_cast<GrandParent*>(&childA));
     }
 
+    TEST(HierarchyTest, UpCastingConst) {
+        ChildA const childA;
+        EXPECT_EQ(childA.cast<ChildA>(), &childA);
+        EXPECT_EQ(childA.cast<ChildB>(), nullptr);
+        EXPECT_EQ(childA.cast<ParentA>(), dynamic_cast<ParentA const*>(&childA));
+        EXPECT_EQ(childA.cast<ParentA>(), static_cast<ParentA const*>(&childA));
+        EXPECT_EQ(childA.cast<ParentB>(), dynamic_cast<ParentB const*>(&childA));
+        EXPECT_EQ(childA.cast<ParentB>(), static_cast<ParentB const*>(&childA));
+        EXPECT_EQ(childA.cast<GrandParent>(), dynamic_cast<GrandParent const*>(&childA));
+        EXPECT_EQ(childA.cast<GrandParent>(), static_cast<GrandParent const*>(&childA));
+    }
+
     TEST(HierarchyTest, DownCasting) {
         ChildA childA;
         GrandParent* grandParent = childA.cast<GrandParent>();
@@ -89,6 +101,20 @@ namespace {
         EXPECT_EQ(grandParent->cast<ParentB>(), static_cast<ParentB*>(&childA));
         EXPECT_EQ(grandParent->cast<GrandParent>(), dynamic_cast<GrandParent*>(&childA));
         EXPECT_EQ(grandParent->cast<GrandParent>(), static_cast<GrandParent*>(&childA));
+    }
+
+    TEST(HierarchyTest, DownCastingConst) {
+        ChildA const childA;
+        GrandParent const* grandParent = childA.cast<GrandParent>();
+
+        EXPECT_EQ(grandParent->cast<ChildA>(), &childA);
+        EXPECT_EQ(grandParent->cast<ChildB>(), nullptr);
+        EXPECT_EQ(grandParent->cast<ParentA>(), dynamic_cast<ParentA const*>(&childA));
+        EXPECT_EQ(grandParent->cast<ParentA>(), static_cast<ParentA const*>(&childA));
+        EXPECT_EQ(grandParent->cast<ParentB>(), dynamic_cast<ParentB const*>(&childA));
+        EXPECT_EQ(grandParent->cast<ParentB>(), static_cast<ParentB const*>(&childA));
+        EXPECT_EQ(grandParent->cast<GrandParent>(), dynamic_cast<GrandParent const*>(&childA));
+        EXPECT_EQ(grandParent->cast<GrandParent>(), static_cast<GrandParent const*>(&childA));
     }
 
 }  // namespace
