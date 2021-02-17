@@ -2,7 +2,7 @@
 
 If you have ever attempted to use the C++'s build in RTTI on a resource constrained (embedded) system you will most likely have noticed it is massively inefficient. Hence this implementation of a hand-rolled form of RTTI which is much more efficient and flexible, although it requires a bit more work from you as a class author. The current implementation supports the following features:
 
- - Automatic ID generation
+ - Automatic (stable) ID generation based on the FNV1a hash of the type signature, currently supports GCC/Clang based compilers.
  - Multiple inheritance, including virtual
  - Full dynamic casting
  - Parent constructors are accessible
