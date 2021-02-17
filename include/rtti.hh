@@ -29,25 +29,61 @@
 #include <cstdint>
 #include <type_traits>
 
+#include "hash.hh"
+
 namespace RTTI {
-    /// Forward declaration of the Enable base.
-    struct Enable;
+    template <typename T>
+    constexpr std::string_view TypeName();
+    
+    template <>
+    constexpr std::string_view TypeName<void>()
+    { return "void"; }
+
+    namespace Detail { 
+        template <typename T>
+        constexpr std::string_view WrappedTypeName()  {
+        #ifdef __clang__
+            return __PRETTY_FUNCTION__;
+        #elif defined(__GNUC__)
+            return __PRETTY_FUNCTION__;
+        #else
+            #error "Unsupported compiler"
+        #endif
+        }
+
+        constexpr std::size_t WrappedTypeNamePrefixLength() { 
+            return WrappedTypeName<void>().find(TypeName<void>()); 
+        }
+        
+        constexpr std::size_t WrappedTypeNameSuffixLength() { 
+            return WrappedTypeName<void>().length() 
+                - WrappedTypeNamePrefixLength() 
+                - TypeName<void>().length();
+        }
+    }
+
+    template <typename T>
+    constexpr std::string_view TypeName() {
+        constexpr auto wrappedTypeName = Detail::WrappedTypeName<T>();
+        constexpr auto prefixLength = Detail::WrappedTypeNamePrefixLength();
+        constexpr auto suffixLength = Detail::WrappedTypeNameSuffixLength();
+        constexpr auto typeNameLength = wrappedTypeName.length() - prefixLength - suffixLength;
+        return wrappedTypeName.substr(prefixLength, typeNameLength);
+    }
 
     /// TypeId type definition
-    using TypeId = uintptr_t;
+    using TypeId = std::uint32_t;
 
-    namespace Detail {
-        template <typename T>
-        struct Type {
-            static constexpr int Id = 0;
-        };
-    }  // namespace Detail
+    /// Forward declaration of the Enable base.
+    struct Enable;
 
     /**
      * Static typeinfo structure for registering types and accessing their information.
      */
     template <typename This, typename... Parents>
     struct TypeInfo {
+        using T = std::remove_const_t<std::remove_reference_t<This>>;
+
         /// Ensure all passed parents are basses of this type.
         static_assert((... && std::is_base_of<Parents, This>::value),
                       "One or more parents are not a base of this type.");
@@ -57,12 +93,19 @@ namespace RTTI {
                       "One or more parent hierarchies is not based on top of RTTI::Enable.");
 
         /**
+         * Returns the type string of the type T.
+         * @returns Type string
+         */
+        [[nodiscard]] static constexpr std::string_view Name() noexcept {
+            return TypeName<T>();
+        }
+
+        /**
          * Returns the type identifier of the type T.
          * @returns Type identifier
          */
-        [[nodiscard]] static TypeId Id() noexcept {
-            return reinterpret_cast<TypeId>(
-                &Detail::Type<std::remove_const_t<std::remove_reference_t<This>>>::Id);
+        [[nodiscard]] static constexpr TypeId Id() noexcept {
+            return Hash::FNV1a(Name());
         }
 
         /**
@@ -70,7 +113,7 @@ namespace RTTI {
          * @tparam The type to compare the identifier with.
          * @returns True in case a match was found.
          */
-        [[nodiscard]] static bool Is(TypeId typeId) noexcept {
+        [[nodiscard]] static constexpr bool Is(TypeId typeId) noexcept {
             return (Id() == typeId) || (... || (Parents::TypeInfo::Is(typeId)));
         }
 

@@ -26,6 +26,13 @@ struct ChildB
     RTTI_DECLARE_TYPEINFO(ChildB, ParentA, ParentB);
 };
 
+template<typename T>
+struct ChildT
+    : ParentA
+    , ParentB {
+    RTTI_DECLARE_TYPEINFO(ChildT<T>, ParentA, ParentB);
+};
+
 namespace {
     TEST(HierarchyTest, TypeIdentification) {
         ChildA childA;
@@ -43,6 +50,24 @@ namespace {
         EXPECT_TRUE(childB.is<ParentA>());
         EXPECT_TRUE(childB.is<ParentB>());
         EXPECT_TRUE(childB.is<GrandParent>());
+
+        ChildT<int> childTi;
+        EXPECT_EQ(childTi.typeId(), RTTI::TypeInfo<ChildT<int>>::Id());
+        EXPECT_FALSE(childTi.is<ChildT<float>>());
+        EXPECT_TRUE(childTi.is<ChildT<int>>());
+        EXPECT_TRUE(childTi.is<ParentA>());
+        EXPECT_TRUE(childTi.is<ParentB>());
+        EXPECT_TRUE(childTi.is<GrandParent>());
+        
+        ChildT<float> childTf;
+        EXPECT_EQ(childTf.typeId(), RTTI::TypeInfo<ChildT<float>>::Id());
+        EXPECT_FALSE(childTf.is<ChildT<int>>());
+        EXPECT_TRUE(childTf.is<ChildT<float>>());
+        EXPECT_TRUE(childTf.is<ParentA>());
+        EXPECT_TRUE(childTf.is<ParentB>());
+        EXPECT_TRUE(childTf.is<GrandParent>());
+
+        EXPECT_NE(childTi.typeId(), childTf.typeId());
 
         ParentA parentA;
         EXPECT_EQ(parentA.typeId(), RTTI::TypeInfo<ParentA>::Id());
