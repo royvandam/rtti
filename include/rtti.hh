@@ -237,5 +237,5 @@ public:                                                                         
                                                                                            \
 protected:                                                                                 \
     [[nodiscard]] virtual void const* _cast(RTTI::TypeId typeId) const noexcept override { \
-        return TypeInfo::DynamicCast(typeId, this);                                        \
+        return TypeInfo::Is(typeId) ? TypeInfo::DynamicCast(typeId, this) : nullptr;       \
     }
