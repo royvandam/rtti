@@ -2,13 +2,14 @@
 
 If you have ever attempted to use the C++'s build in RTTI on a resource constrained (embedded) system you will most likely have noticed it is massively inefficient. Hence this implementation of a hand-rolled form of RTTI which is much more efficient and flexible, although it requires a bit more work from you as a class author. The current implementation supports the following features:
 
- - Automatic (stable) ID generation based on the FNV1a hash of the type signature, currently supports GCC/Clang based compilers.
+ - Compiletime (stable) ID generation based on the FNV1a hash of the type signature
  - Multiple inheritance, including virtual
  - Full dynamic casting support
  - Parent constructors are accessible
  - No external dependencies, single header
  - Static asserts on the parents passed to TypeInfo structure.
  - Works on bare-metal systems
+ - Currently supports GCC/Clang based compilers
  - One convenience marco ¯\\_(ツ)_/¯
 
 Note: This project was initially inspired by open-hierarchy examples in the guidelines defined for RTTI by the LLVM project<sup>[1]</sup>. However this solution has one major drawback which is that the parent constructors are no longer accessible given that RTTI classes are injected in between the parent and child. The initial (working) implementation based on this design is still available for reference under git tag `llvm-style-inheritance`.
