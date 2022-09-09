@@ -12,7 +12,7 @@ If you have ever attempted to use the C++'s build in RTTI on a resource constrai
  - Currently supports GCC/Clang based compilers
  - One convenience marco ¯\\_(ツ)_/¯
 
-Note: This project was initially inspired by open-hierarchy examples in the guidelines defined for RTTI by the LLVM project<sup>[1]</sup>. However this solution has one major drawback which is that the parent constructors are no longer accessible given that RTTI classes are injected in between the parent and child. The initial (working) implementation based on this design is still available for reference under git tag `llvm-style-inheritance`.
+Note: This project was initially inspired by open-hierarchy examples in the guidelines defined for RTTI by the LLVM project<sup>[1]</sup>. However this solution has one major drawback which is that the parent constructors are no longer accessible given that RTTI classes are injected in between the parent and child. An initial implementation of the RTTI library was based on this design and is still available for reference under git tag `llvm-style-inheritance`.
 
 [1] https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html
 
@@ -21,8 +21,9 @@ Note: This project was initially inspired by open-hierarchy examples in the guid
 ## How to use
 
  - Add `-fno-rtti` to your compile options in order to disable C++'s build in RTTI. (Optional, as it can work in conjunction with native RTTI)
- - The `RTTI::Enable` class the describes the abstract interface for performing runtime RTTI checks and type casing and is to be virtually derived from by the highest member(s) in the class hierarchy. For each type part of the hierarchy the `RTTI_DECLARE_TYPEINFO(Type, Parents...)` macro should be called to define an alias to `RTTI::TypeInfo` and overload the virtual methods of the interface described by `RTTI::Enable`.
- - The `RTTI::TypeInfo` class defines the type information and a describes the static interface for performing RTTI checks and type casting. It uses the “Curiously Recurring Template Idiom”, taking the class being defined as its first template argument and optionally the parent classes as the arguments there after.
+ - `RTTI::Enable` describes the abstract interface for performing runtime RTTI checks and type casing. It is to be virtually derived from by the highest member(s) in the class hierarchy.
+ - For each type part of the hierarchy the `RTTI_DECLARE_TYPEINFO(Type, Parents...)` macro should be added after the opening brace to define a type alias to `RTTI::TypeInfo` structure and overload the virtual methods of the interface described by `RTTI::Enable`.
+ - `RTTI::TypeInfo` holds the type information of each member and provides statis methods for performing RTTI checks and type casting. It uses the “Curiously Recurring Template Idiom”, taking the class being defined as its first template argument and optionally the parent classes as the arguments there after.
 
 ### Basic example:
 
@@ -113,4 +114,5 @@ RttiDynamicCast         6.08 ns         6.08 ns    114135771
 
 ## Contribute
 
-Found a bug/mistake or have any other means you want to contribute? Feel free to open an issue or pull request! :)
+Have you found a bug/mistake or any other proposal and want to contribute? Feel free to open an issue or pull request!
+Happy coding!
