@@ -29,6 +29,12 @@
 #include <cstdint>
 #include <type_traits>
 
+#if __cplusplus >= 202002L || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L)
+    #if __has_include(<source_location>)
+        #include <source_location>
+    #endif
+#endif
+
 #include "hash.hh"
 
 namespace RTTI {
@@ -36,29 +42,31 @@ namespace RTTI {
     constexpr std::string_view TypeName();
 
     template <>
-    constexpr std::string_view TypeName<void>()
-    { return "void"; }
+    constexpr std::string_view TypeName<const void>()
+    { return "const void"; }
 
     namespace Detail {
         template <typename T>
-        constexpr std::string_view WrappedTypeName()  {
-        #ifdef __clang__
+        constexpr std::string_view WrappedTypeName() {
+        #if defined(__cpp_lib_source_location) && __cpp_lib_source_location >= 201907L
+            return std::source_location::current().function_name();
+        #elif defined(__clang__) || defined(__GNUC__)
             return __PRETTY_FUNCTION__;
-        #elif defined(__GNUC__)
-            return __PRETTY_FUNCTION__;
+        #elif defined(_MSC_VER)
+            return __FUNCSIG__;
         #else
             #error "Unsupported compiler"
         #endif
         }
 
         constexpr std::size_t WrappedTypeNamePrefixLength() {
-            return WrappedTypeName<void>().find(TypeName<void>());
+            return WrappedTypeName<const void>().find(TypeName<const void>());
         }
 
         constexpr std::size_t WrappedTypeNameSuffixLength() {
-            return WrappedTypeName<void>().length()
+            return WrappedTypeName<const void>().length()
                 - WrappedTypeNamePrefixLength()
-                - TypeName<void>().length();
+                - TypeName<const void>().length();
         }
     }
 
@@ -70,6 +78,10 @@ namespace RTTI {
         constexpr auto typeNameLength = wrappedTypeName.length() - prefixLength - suffixLength;
         return wrappedTypeName.substr(prefixLength, typeNameLength);
     }
+
+    // Basic sanity check
+    static_assert(TypeName<void>() == "void");
+    static_assert(TypeName<int>() == "int");
 
     /// TypeId type definition
     using TypeId = std::uint32_t;

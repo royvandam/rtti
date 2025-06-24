@@ -9,7 +9,7 @@ If you have ever attempted to use the C++'s build in RTTI on a resource constrai
  - No external dependencies, single header
  - Static asserts on the parents passed to TypeInfo structure.
  - Works on bare-metal systems
- - Currently supports GCC/Clang based compilers
+ - Supports GCC/Clang based compilers and MSVC; uses `std::source_location` when available in C++20 and up
  - One convenience marco ¯\\_(ツ)_/¯
 
 Note: This project was initially inspired by open-hierarchy examples in the guidelines defined for RTTI by the LLVM project<sup>[1]</sup>. However this solution has one major drawback which is that the parent constructors are no longer accessible given that RTTI classes are injected in between the parent and child. An initial implementation of the RTTI library was based on this design and is still available for reference under git tag `llvm-style-inheritance`.
