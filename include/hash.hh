@@ -1,10 +1,10 @@
 #pragma once
 
-#include <string_view>
 #include <cstdint>
+#include <string_view>
 
 namespace Hash {
-    /** 
+    /**
      * Calculates the 32bit FNV1a hash of a c-string literal.
      * @param str String literal to be hashed
      * @param n Length of the string.
@@ -13,7 +13,7 @@ namespace Hash {
     static constexpr std::uint32_t FNV1a(const char* str, std::size_t n, std::uint32_t hash = UINT32_C(2166136261)) {
         return n == 0 ? hash : FNV1a(str + 1, n - 1, (hash ^ str[0]) * UINT32_C(19777619));
     }
-    
+
     /**
      * Calculates the 32bit FNV1a hash of a std::string_view literal.
      * note: Requires string_view to be a literal in order to be evaluated during compile time!

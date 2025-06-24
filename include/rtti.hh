@@ -34,12 +34,12 @@
 namespace RTTI {
     template <typename T>
     constexpr std::string_view TypeName();
-    
+
     template <>
     constexpr std::string_view TypeName<void>()
     { return "void"; }
 
-    namespace Detail { 
+    namespace Detail {
         template <typename T>
         constexpr std::string_view WrappedTypeName()  {
         #ifdef __clang__
@@ -51,13 +51,13 @@ namespace RTTI {
         #endif
         }
 
-        constexpr std::size_t WrappedTypeNamePrefixLength() { 
-            return WrappedTypeName<void>().find(TypeName<void>()); 
+        constexpr std::size_t WrappedTypeNamePrefixLength() {
+            return WrappedTypeName<void>().find(TypeName<void>());
         }
-        
-        constexpr std::size_t WrappedTypeNameSuffixLength() { 
-            return WrappedTypeName<void>().length() 
-                - WrappedTypeNamePrefixLength() 
+
+        constexpr std::size_t WrappedTypeNameSuffixLength() {
+            return WrappedTypeName<void>().length()
+                - WrappedTypeNamePrefixLength()
                 - TypeName<void>().length();
         }
     }
