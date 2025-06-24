@@ -176,8 +176,12 @@ namespace RTTI {
     /**
      * Parent type for types at the base of an open RTTI hierarchy
      */
+#ifdef _MSC_VER
+    struct __declspec(novtable) Enable {
+#else
     struct Enable {
-        virtual ~Enable() = default;
+#endif
+        virtual ~Enable() = 0;
 
         /**
          * Returns the type identifier of the object.
@@ -248,6 +252,8 @@ namespace RTTI {
          */
         [[nodiscard]] virtual void const* _cast(TypeId typeId) const noexcept = 0;
     };
+
+    inline Enable::~Enable() = default;
 }  // namespace RTTI
 
 /**
