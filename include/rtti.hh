@@ -28,6 +28,7 @@
 #include <array>
 #include <cstdint>
 #include <type_traits>
+#include <utility>
 
 #if __cplusplus >= 202002L || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L)
     #if __has_include(<source_location>)
@@ -46,6 +47,14 @@ namespace RTTI {
     { return "const void"; }
 
     namespace Detail {
+        template <typename This, typename T, typename = void>
+        struct IsStaticCastable : std::false_type {};
+
+        template <typename This, typename T>
+        struct IsStaticCastable<This, T,
+            std::void_t<decltype(static_cast<This const*>(std::declval<T const*>()))>>
+            : std::true_type {};
+
         template <typename T>
         constexpr std::string_view WrappedTypeName() {
         #if defined(__cpp_lib_source_location) && __cpp_lib_source_location >= 201907L
@@ -142,10 +151,12 @@ namespace RTTI {
         template <typename T>
         [[nodiscard]] static void const* DynamicCast(TypeId typeId, T const* ptr) noexcept {
             // Check whether the current type matches the requested type.
-            if (Id() == typeId) {
-                // Cast the passed pointer in to the current type and stop
-                // the recursion.
-                return static_cast<This const*>(ptr);
+            if constexpr (Detail::IsStaticCastable<This, T>::value) {
+                if (Id() == typeId) {
+                    // Cast the passed pointer in to the current type and stop
+                    // the recursion.
+                    return static_cast<This const*>(ptr);
+                }
             }
 
             // The current type does not match, recursively invoke the method

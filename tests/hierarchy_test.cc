@@ -33,6 +33,20 @@ struct ChildT
     RTTI_DECLARE_TYPEINFO(ChildT<T>, ParentA, ParentB);
 };
 
+struct NonVirtualParentA : GrandParent {
+    RTTI_DECLARE_TYPEINFO(NonVirtualParentA, GrandParent);
+};
+
+struct NonVirtualParentB : GrandParent {
+    RTTI_DECLARE_TYPEINFO(NonVirtualParentB, GrandParent);
+};
+
+struct NonVirtualChild
+    : NonVirtualParentA
+    , NonVirtualParentB {
+    RTTI_DECLARE_TYPEINFO(NonVirtualChild, NonVirtualParentA, NonVirtualParentB);
+};
+
 namespace {
     TEST(HierarchyTest, TypeIdentification) {
         ChildA childA;
@@ -144,6 +158,50 @@ namespace {
         EXPECT_EQ(grandParent->cast<ParentB>(), static_cast<ParentB const*>(&childA));
         EXPECT_EQ(grandParent->cast<GrandParent>(), dynamic_cast<GrandParent const*>(&childA));
         EXPECT_EQ(grandParent->cast<GrandParent>(), static_cast<GrandParent const*>(&childA));
+    }
+
+    TEST(HierarchyTest, NonVirtualDiamondCasting) {
+        NonVirtualChild child;
+        NonVirtualParentA* parentA = &child;
+        NonVirtualParentB* parentB = &child;
+        GrandParent* grandParentA = parentA;
+        GrandParent* grandParentB = parentB;
+
+        EXPECT_TRUE(child.is<GrandParent>());
+        EXPECT_EQ(child.cast<GrandParent>(), nullptr);
+        EXPECT_EQ(child.cast<NonVirtualChild>(), &child);
+        EXPECT_EQ(child.cast<NonVirtualParentA>(), parentA);
+        EXPECT_EQ(child.cast<NonVirtualParentB>(), parentB);
+        EXPECT_EQ(child.cast<ChildA>(), nullptr);
+
+        EXPECT_EQ(grandParentA->cast<NonVirtualChild>(), &child);
+        EXPECT_EQ(grandParentB->cast<NonVirtualChild>(), &child);
+        EXPECT_EQ(parentA->cast<NonVirtualParentB>(), parentB);
+        EXPECT_EQ(parentB->cast<NonVirtualParentA>(), parentA);
+        EXPECT_EQ(grandParentA->cast<GrandParent>(), nullptr);
+        EXPECT_EQ(grandParentB->cast<GrandParent>(), nullptr);
+    }
+
+    TEST(HierarchyTest, NonVirtualDiamondCastingConst) {
+        NonVirtualChild const child;
+        NonVirtualParentA const* parentA = &child;
+        NonVirtualParentB const* parentB = &child;
+        GrandParent const* grandParentA = parentA;
+        GrandParent const* grandParentB = parentB;
+
+        EXPECT_TRUE(child.is<GrandParent>());
+        EXPECT_EQ(child.cast<GrandParent>(), nullptr);
+        EXPECT_EQ(child.cast<NonVirtualChild>(), &child);
+        EXPECT_EQ(child.cast<NonVirtualParentA>(), parentA);
+        EXPECT_EQ(child.cast<NonVirtualParentB>(), parentB);
+        EXPECT_EQ(child.cast<ChildA>(), nullptr);
+
+        EXPECT_EQ(grandParentA->cast<NonVirtualChild>(), &child);
+        EXPECT_EQ(grandParentB->cast<NonVirtualChild>(), &child);
+        EXPECT_EQ(parentA->cast<NonVirtualParentB>(), parentB);
+        EXPECT_EQ(parentB->cast<NonVirtualParentA>(), parentA);
+        EXPECT_EQ(grandParentA->cast<GrandParent>(), nullptr);
+        EXPECT_EQ(grandParentB->cast<GrandParent>(), nullptr);
     }
 
 }  // namespace
