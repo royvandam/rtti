@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <rtti.hh>
+#include <type_traits>
 
 struct GrandParent : virtual RTTI::Enable {
     RTTI_DECLARE_TYPEINFO(GrandParent);
@@ -48,6 +49,18 @@ struct NonVirtualChild
 };
 
 namespace {
+    template <typename T>
+    void ExpectMostDerivedObject(T* ptr, void const* expected) {
+        using Void = std::conditional_t<std::is_const_v<T>, void const, void>;
+        static_assert(std::is_same_v<decltype(ptr->template cast<void>()), Void*>);
+        static_assert(std::is_same_v<decltype(ptr->template cast<const void>()), void const*>);
+
+        EXPECT_EQ(ptr->template cast<void>(), expected);
+        EXPECT_EQ(ptr->template cast<const void>(), expected);
+        EXPECT_EQ(ptr->template cast<void>(), dynamic_cast<Void*>(ptr));
+        EXPECT_EQ(ptr->template cast<const void>(), dynamic_cast<void const*>(ptr));
+    }
+
     TEST(HierarchyTest, TypeIdentification) {
         ChildA childA;
         EXPECT_EQ(childA.typeId(), RTTI::TypeInfo<ChildA>::Id());
@@ -202,6 +215,48 @@ namespace {
         EXPECT_EQ(parentB->cast<NonVirtualParentA>(), parentA);
         EXPECT_EQ(grandParentA->cast<GrandParent>(), nullptr);
         EXPECT_EQ(grandParentB->cast<GrandParent>(), nullptr);
+    }
+
+    TEST(HierarchyTest, MostDerivedObjectCasting) {
+        ChildA child;
+        ExpectMostDerivedObject(&child, &child);
+        ExpectMostDerivedObject(static_cast<ParentA*>(&child), &child);
+        ExpectMostDerivedObject(static_cast<ParentB*>(&child), &child);
+        ExpectMostDerivedObject(static_cast<GrandParent*>(&child), &child);
+        ExpectMostDerivedObject(static_cast<RTTI::Enable*>(&child), &child);
+    }
+
+    TEST(HierarchyTest, MostDerivedObjectCastingConst) {
+        ChildA const child;
+        ExpectMostDerivedObject(&child, &child);
+        ExpectMostDerivedObject(static_cast<ParentA const*>(&child), &child);
+        ExpectMostDerivedObject(static_cast<ParentB const*>(&child), &child);
+        ExpectMostDerivedObject(static_cast<GrandParent const*>(&child), &child);
+        ExpectMostDerivedObject(static_cast<RTTI::Enable const*>(&child), &child);
+    }
+
+    TEST(HierarchyTest, NonVirtualDiamondMostDerivedObjectCasting) {
+        NonVirtualChild child;
+        NonVirtualParentA* parentA = &child;
+        NonVirtualParentB* parentB = &child;
+        ExpectMostDerivedObject(&child, &child);
+        ExpectMostDerivedObject(parentA, &child);
+        ExpectMostDerivedObject(parentB, &child);
+        ExpectMostDerivedObject(static_cast<GrandParent*>(parentA), &child);
+        ExpectMostDerivedObject(static_cast<GrandParent*>(parentB), &child);
+        ExpectMostDerivedObject(static_cast<RTTI::Enable*>(&child), &child);
+    }
+
+    TEST(HierarchyTest, NonVirtualDiamondMostDerivedObjectCastingConst) {
+        NonVirtualChild const child;
+        NonVirtualParentA const* parentA = &child;
+        NonVirtualParentB const* parentB = &child;
+        ExpectMostDerivedObject(&child, &child);
+        ExpectMostDerivedObject(parentA, &child);
+        ExpectMostDerivedObject(parentB, &child);
+        ExpectMostDerivedObject(static_cast<GrandParent const*>(parentA), &child);
+        ExpectMostDerivedObject(static_cast<GrandParent const*>(parentB), &child);
+        ExpectMostDerivedObject(static_cast<RTTI::Enable const*>(&child), &child);
     }
 
 }  // namespace

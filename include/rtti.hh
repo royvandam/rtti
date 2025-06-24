@@ -211,6 +211,7 @@ namespace RTTI {
          * passed type using a static_cast. The pointer offset for types
          * dependent on multiple inheritance is hence resolved at compile-time.
          * In essence we are always up-casting from the most specialized type.
+         * For void types, returns the address of the most specialized object.
          *
          * @tparam T Pointer type to case the object into.
          * @returns A valid pointer to an instance of the passed type. Nullptr
@@ -219,12 +220,20 @@ namespace RTTI {
          */
         template <typename T>
         [[nodiscard]] T* cast() noexcept {
-            return reinterpret_cast<T*>(const_cast<void*>(_cast(TypeInfo<T>::Id())));
+            if constexpr (std::is_void_v<T>) {
+                return const_cast<void*>(_cast(typeId()));
+            } else {
+                return reinterpret_cast<T*>(const_cast<void*>(_cast(TypeInfo<T>::Id())));
+            }
         }
 
         template <typename T>
         [[nodiscard]] T const* cast() const noexcept {
-            return reinterpret_cast<T const*>(_cast(TypeInfo<T>::Id()));
+            if constexpr (std::is_void_v<T>) {
+                return _cast(typeId());
+            } else {
+                return reinterpret_cast<T const*>(_cast(TypeInfo<T>::Id()));
+            }
         }
 
     protected:
