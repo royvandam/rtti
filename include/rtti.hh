@@ -22,7 +22,8 @@
  * SOFTWARE.
  */
 
-#pragma once
+#ifndef RTTI_RTTI_HH
+#define RTTI_RTTI_HH
 
 #include <algorithm>
 #include <array>
@@ -110,7 +111,8 @@ namespace RTTI {
                       "One or more parents are not a base of this type.");
 
         /// Ensure all passed parent hierarchies have RTTI enabled.
-        static_assert((... && std::is_base_of<Enable, Parents>::value),
+        static_assert((... && std::is_base_of<Enable, Parents>::value) ||
+                      (... && !std::is_polymorphic<Parents>::value),
                       "One or more parent hierarchies is not based on top of RTTI::Enable.");
 
         /**
@@ -182,6 +184,7 @@ namespace RTTI {
     struct Enable {
 #endif
         virtual ~Enable() = 0;
+        Enable& operator=(Enable&&) = delete;
 
         /**
          * Returns the type identifier of the object.
@@ -261,19 +264,40 @@ namespace RTTI {
  * open hierarchy RTTI structure. The type itself or one or more parents of the type
  * need to have been derived from RTTI::Enable.
  * @param T The type it self.
- * @param Parents Variadic number of direct parrent types of the type
+ * @param Parents Variadic number of direct parent types of the type
  */
-#define RTTI_DECLARE_TYPEINFO(T, ...)                                                      \
-public:                                                                                    \
-    using TypeInfo = RTTI::TypeInfo<T, ##__VA_ARGS__>;                                     \
-    [[nodiscard]] virtual RTTI::TypeId typeId() const noexcept override {                  \
-        return TypeInfo::Id();                                                             \
-    }                                                                                      \
-    [[nodiscard]] virtual bool isById(RTTI::TypeId typeId) const noexcept override {       \
-        return TypeInfo::Is(typeId);                                                       \
-    }                                                                                      \
-                                                                                           \
-protected:                                                                                 \
-    [[nodiscard]] virtual void const* _cast(RTTI::TypeId typeId) const noexcept override { \
-        return TypeInfo::Is(typeId) ? TypeInfo::DynamicCast(typeId, this) : nullptr;       \
-    }
+#define RTTI_DECLARE_TYPEINFO(T, ...)                                                \
+public:                                                                              \
+    using TypeInfo = RTTI::TypeInfo<T, ##__VA_ARGS__>;                               \
+                                                                                     \
+    [[nodiscard]] RTTI::TypeId typeId() const noexcept override {                    \
+        return TypeInfo::Id();                                                       \
+    }                                                                                \
+    [[nodiscard]] bool isById(RTTI::TypeId typeId) const noexcept override {         \
+        return TypeInfo::Is(typeId);                                                 \
+    }                                                                                \
+                                                                                     \
+protected:                                                                           \
+    [[nodiscard]] void const* _cast(RTTI::TypeId typeId) const noexcept override {   \
+        return TypeInfo::Is(typeId) ? TypeInfo::DynamicCast(typeId, this) : nullptr; \
+    }                                                                                \
+                                                                                     \
+private:                                                                             \
+    static_assert(true, "")
+
+/**
+ * Macro to be called in the body of each type declaration that only needs to have
+ * a ::TypeInfo trait, but no virtual function or dynamic casting. The type itself
+ * must be non-polymorphic, as well as all of its parents, and none of them should
+ * be derived from RTTI::Enable.
+ * @param T The type it self.
+ * @param Parents Variadic number of direct parent types of the type
+ */
+#define RTTI_DECLARE_TRIVIAL(T, ...)                                                 \
+public:                                                                              \
+    using TypeInfo = RTTI::TypeInfo<T, ##__VA_ARGS__>;                               \
+                                                                                     \
+private:                                                                             \
+    static_assert(true, "")
+
+#endif // RTTI_RTTI_HH
