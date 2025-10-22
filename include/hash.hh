@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RTTI_HASH_HH
+#define RTTI_HASH_HH
 
 #include <cstdint>
 #include <string_view>
@@ -10,8 +11,8 @@ namespace Hash {
      * @param n Length of the string.
      * @return Calculated hash of the string
      */
-    static constexpr std::uint32_t FNV1a(const char* str, std::size_t n, std::uint32_t hash = UINT32_C(2166136261)) {
-        return n == 0 ? hash : FNV1a(str + 1, n - 1, (hash ^ str[0]) * UINT32_C(19777619));
+    static constexpr std::uint32_t FNV1a(const char* str, std::size_t n, std::uint32_t hash = std::uint32_t{2166136261}) {
+        return n == 0 ? hash : FNV1a(str + 1, n - 1, (hash ^ static_cast<std::uint32_t>(str[0])) * std::uint32_t{19777619});
     }
 
     /**
@@ -24,3 +25,5 @@ namespace Hash {
         return FNV1a(str.data(), str.size());
     }
 }
+
+#endif // RTTI_HASH_HH
