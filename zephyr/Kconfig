@@ -1,0 +1,4 @@
+config CUSTOM_RTTI
+    bool "Custom RTTI library"
+    help
+      Enable the Open-hierarchy custom RTTI framework library.

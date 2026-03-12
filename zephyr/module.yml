@@ -1,0 +1,4 @@
+name: rtti
+build:
+  cmake: zephyr
+  kconfig: zephyr/Kconfig
