@@ -143,8 +143,8 @@ namespace RTTI {
 
             // Check whether the traversal up the dependency hierarchy returned a pointer
             // that is not null.
-            auto it = std::find_if(ptrs.begin(), ptrs.end(), [](void const* ptr) {
-                return ptr != nullptr;
+            auto it = std::find_if(ptrs.begin(), ptrs.end(), [](void const* p) {
+                return p != nullptr;
             });
             return (it != ptrs.end()) ? *it : nullptr;
         }
