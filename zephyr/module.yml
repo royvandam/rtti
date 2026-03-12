@@ -2,3 +2,6 @@ name: rtti
 build:
   cmake: zephyr
   kconfig: zephyr/Kconfig
+security:
+  external-references:
+    - pkg:github/royvandam/rtti@1.0
