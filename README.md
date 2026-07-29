@@ -2,7 +2,7 @@
 
 If you have ever attempted to use the C++'s build in RTTI on a resource constrained (embedded) system you will most likely have noticed it is massively inefficient. Hence this implementation of a hand-rolled form of RTTI which is much more efficient and flexible, although it requires a bit more work from you as a class author. The current implementation supports the following features:
 
- - Compiletime (stable) ID generation based on the FNV1a hash of the type signature
+ - Compiletime ID generation using deterministic type-name hashes by default, or optional process-local pointers
  - Multiple inheritance, including virtual
  - Full dynamic casting support
  - Parent constructors are accessible
@@ -93,6 +93,16 @@ void testValueTypeId() {
     assert(v.valueTypeId() != TypeInfo<bool>::Id());
 }
 ```
+
+## Type ID configuration
+
+By default, `RTTI::TypeId` is a `std::uint32_t` containing the existing FNV1a hash of the type name. Hash IDs are deterministic for the same compiler-generated type name; different compilers or changes to those names can produce different IDs.
+
+To use process-local pointer IDs, configure CMake with `-DRTTI_USE_POINTER_TYPE_IDS=ON` and link consumers to the `rtti` target. For direct header use, define `RTTI_USE_POINTER_TYPE_IDS=1` before including `rtti.hh`, or pass `-DRTTI_USE_POINTER_TYPE_IDS=1` to the compiler. The default is `0` (hash IDs).
+
+In pointer mode, `RTTI::TypeId` is `void const*`. Each type is identified by the address of a C++17 inline variable, with no external dependency or runtime registration. These IDs are only valid within the running program and must not be persisted or exchanged between processes. Shared-library boundaries require consistent symbol visibility for the type tags.
+
+All translation units and libraries exchanging RTTI objects must use the same setting. Both modes support C++17, retain `TypeInfo<T>::Name()`, and use short-circuit traversal for dynamic casts.
 
 ## Benchmark Results
 

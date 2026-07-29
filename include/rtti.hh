@@ -25,11 +25,13 @@
 #ifndef RTTI_RTTI_HH
 #define RTTI_RTTI_HH
 
-#include <algorithm>
-#include <array>
 #include <cstdint>
 #include <type_traits>
 #include <utility>
+
+#ifndef RTTI_USE_POINTER_TYPE_IDS
+    #define RTTI_USE_POINTER_TYPE_IDS 0
+#endif
 
 #if __cplusplus >= 202002L || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L)
     #if __has_include(<source_location>)
@@ -48,6 +50,11 @@ namespace RTTI {
     { return "const void"; }
 
     namespace Detail {
+    #if RTTI_USE_POINTER_TYPE_IDS
+        template <typename T>
+        inline constexpr unsigned char TypeIdTag{};
+    #endif
+
         template <typename This, typename T, typename = void>
         struct IsStaticCastable : std::false_type {};
 
@@ -94,7 +101,11 @@ namespace RTTI {
     static_assert(TypeName<int>() == "int");
 
     /// TypeId type definition
+    #if RTTI_USE_POINTER_TYPE_IDS
+    using TypeId = void const*;
+    #else
     using TypeId = std::uint32_t;
+    #endif
 
     /// Forward declaration of the Enable base.
     struct Enable;
@@ -128,7 +139,11 @@ namespace RTTI {
          * @returns Type identifier
          */
         [[nodiscard]] static constexpr TypeId Id() noexcept {
+        #if RTTI_USE_POINTER_TYPE_IDS
+            return &Detail::TypeIdTag<T>;
+        #else
             return Hash::FNV1a(Name());
+        #endif
         }
 
         /**
@@ -151,7 +166,7 @@ namespace RTTI {
          * the value returned is a nullptr.
          */
         template <typename T>
-        [[nodiscard]] static void const* DynamicCast(TypeId typeId, T const* ptr) noexcept {
+        [[nodiscard]] static constexpr void const* DynamicCast(TypeId typeId, T const* ptr) noexcept {
             // Check whether the current type matches the requested type.
             if constexpr (Detail::IsStaticCastable<This, T>::value) {
                 if (Id() == typeId) {
@@ -162,16 +177,11 @@ namespace RTTI {
             }
 
             // The current type does not match, recursively invoke the method
-            // for all directly related parent types.
-            std::array<void const*, sizeof...(Parents)> ptrs = {
-                Parents::TypeInfo::DynamicCast(typeId, ptr)...};
-
-            // Check whether the traversal up the dependency hierarchy returned a pointer
-            // that is not null.
-            auto it = std::find_if(ptrs.begin(), ptrs.end(), [](void const* ptr) {
-                return ptr != nullptr;
-            });
-            return (it != ptrs.end()) ? *it : nullptr;
+            // for directly related parent types, stopping at the first match.
+            void const* result = nullptr;
+            static_cast<void>(
+                (... || ((result = Parents::TypeInfo::DynamicCast(typeId, ptr)) != nullptr)));
+            return result;
         }
     };
 
@@ -279,7 +289,7 @@ public:                                                                         
                                                                                      \
 protected:                                                                           \
     [[nodiscard]] void const* _cast(RTTI::TypeId typeId) const noexcept override {   \
-        return TypeInfo::Is(typeId) ? TypeInfo::DynamicCast(typeId, this) : nullptr; \
+        return TypeInfo::DynamicCast(typeId, this);                                \
     }                                                                                \
                                                                                      \
 private:                                                                             \

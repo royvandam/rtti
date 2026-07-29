@@ -12,6 +12,7 @@ option(ENABLE_CPPCHECK         "Enable cppcheck for static code analysis"   OFF)
 option(ENABLE_CLANG_TIDY       "Enable clang-tidy for static code analysis" OFF)
 option(BUILD_TESTS             "Build unittest binary"                      ON)
 option(BUILD_BENCHMARK         "Build benchmark binary"                     ON)
+option(RTTI_USE_POINTER_TYPE_IDS "Use process-local pointer IDs instead of deterministic hashes" OFF)
 
 # CXX compilation options
 set(CMAKE_CXX_STANDARD 17)
@@ -70,6 +71,7 @@ endif()
 set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/rtti.hh)
 add_library(rtti INTERFACE)
 target_include_directories(rtti INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_compile_definitions(rtti INTERFACE RTTI_USE_POINTER_TYPE_IDS=$<BOOL:${RTTI_USE_POINTER_TYPE_IDS}>)
 clang_format(rtti ${SOURCES})
 
 # Configure install targets

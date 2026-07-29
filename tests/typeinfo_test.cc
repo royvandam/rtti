@@ -1,9 +1,14 @@
 #include <gtest/gtest.h>
 
 #include <rtti.hh>
+#include <type_traits>
 #include <typeinfo>
 
 using namespace RTTI;
+
+namespace TypeInfoTest {
+    TypeId IntIdFromAnotherTranslationUnit() noexcept;
+}
 
 TEST(TypeInfo, NamesAreAvailableAtCompileTime) {
     static_assert(TypeName<void>() == "void");
@@ -11,7 +16,22 @@ TEST(TypeInfo, NamesAreAvailableAtCompileTime) {
     static_assert(TypeName<int>() == "int");
     static_assert(TypeName<bool>() == "bool");
     static_assert(TypeInfo<void>::Name() == "void");
+}
+
+TEST(TypeInfo, ConfiguredIdRepresentation) {
+#if RTTI_USE_POINTER_TYPE_IDS
+    static_assert(std::is_same_v<TypeId, void const*>);
+    static_assert(TypeInfo<int>::Id() != nullptr);
+    static_assert(TypeInfo<int>::Id() != TypeInfo<bool>::Id());
+#else
+    static_assert(std::is_same_v<TypeId, std::uint32_t>);
     static_assert(TypeInfo<int>::Id() == Hash::FNV1a("int"));
+    static_assert(TypeInfo<void>::Id() == Hash::FNV1a("void"));
+#endif
+}
+
+TEST(TypeInfo, IdsAgreeAcrossTranslationUnits) {
+    EXPECT_EQ(TypeInfo<int>::Id(), TypeInfoTest::IntIdFromAnotherTranslationUnit());
 }
 
 TEST(TypeInfo, NamesPreserveTypeQualifiers) {

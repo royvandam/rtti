@@ -49,6 +49,21 @@ namespace {
         static_assert(!TrivialChild::TypeInfo::Name().empty());
     }
 
+    TEST(TypeDeclarations, IdsDoNotDependOnParentList) {
+        static_assert(PolymorphicChild::TypeInfo::Id() == RTTI::TypeInfo<PolymorphicChild>::Id());
+        static_assert(TrivialChild::TypeInfo::Id() == RTTI::TypeInfo<TrivialChild>::Id());
+    }
+
+    TEST(TypeDeclarations, DynamicCastingIsAvailableAtCompileTime) {
+        constexpr TrivialChild child{};
+        static_assert(TrivialChild::TypeInfo::DynamicCast(TrivialChild::TypeInfo::Id(), &child) == &child);
+        static_assert(TrivialChild::TypeInfo::DynamicCast(TrivialBaseA::TypeInfo::Id(), &child)
+            == static_cast<TrivialBaseA const*>(&child));
+        static_assert(TrivialChild::TypeInfo::DynamicCast(TrivialBaseB::TypeInfo::Id(), &child)
+            == static_cast<TrivialBaseB const*>(&child));
+        static_assert(TrivialChild::TypeInfo::DynamicCast(RTTI::TypeInfo<int>::Id(), &child) == nullptr);
+    }
+
     TEST(TypeDeclarations, TrivialHierarchyKeepsValueSemantics) {
         static_assert(std::is_trivial_v<TrivialBaseA>);
         static_assert(std::is_trivial_v<TrivialBaseB>);
