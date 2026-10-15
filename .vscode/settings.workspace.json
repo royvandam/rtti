@@ -1,0 +1,36 @@
+{
+    "clangd.path": "$(bash \"${workspaceFolder}/.vscode/settings-helper.sh\" --get-clangd-path)",
+    "clangd.useScriptAsExecutable": true,
+    "clangd.arguments": [
+        "--background-index",
+        "--compile-commands-dir=${workspaceFolder}/build",
+        "--query-driver=$(bash \"${workspaceFolder}/.vscode/settings-helper.sh\" --get-cxx-path)"
+    ],
+    "clangd.fallbackFlags": [
+        "-std=c++17",
+        "-I${workspaceFolder}/include"
+    ],
+    "cmake.cmakePath": "$(bash \"${workspaceFolder}/.vscode/settings-helper.sh\" --get-cmake-path)",
+    "cmake.configureOnOpen": false,
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.generator": "Ninja",
+    "cmake.configureSettings": {
+        "CMAKE_C_COMPILER": "$(bash \"${workspaceFolder}/.vscode/settings-helper.sh\" --get-cc-path)",
+        "CMAKE_CXX_COMPILER": "$(bash \"${workspaceFolder}/.vscode/settings-helper.sh\" --get-cxx-path)",
+        "CMAKE_MAKE_PROGRAM": "$(bash \"${workspaceFolder}/.vscode/settings-helper.sh\" --get-ninja-path)",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true
+    },
+    "cmake.environment": {
+        "PATH": "$(bash \"${workspaceFolder}/.vscode/settings-helper.sh\" --get-env-path)",
+        "TMPDIR": "/tmp",
+        "TMP": "/tmp",
+        "TEMP": "/tmp"
+    },
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "[cpp]": {
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+    },
+    "files.associations": {
+        "type_traits": "cpp"
+    }
+}

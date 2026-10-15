@@ -134,6 +134,53 @@ NativeDynamicCast        133 ns          133 ns      5252735
 RttiDynamicCast         6.08 ns         6.08 ns    114135771
 ```
 
+## Development
+
+Enter the development environment with `nix-shell`. It uses your configured
+`nixpkgs` and provides GCC, CMake, Ninja, `clangd`, `clang-format`, `clang-tidy`,
+Cppcheck, GDB, and Git.
+
+```sh
+nix-shell
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+The shell selects Ninja and enables `build/compile_commands.json` for language
+server support. The first build downloads and installs GoogleTest and Google
+Benchmark into `build/external`, so it requires network access. Build once to
+make their headers available to the language server.
+
+### VS Code, including Remote SSH
+
+Install the recommended **clangd** (`llvm-vs-code-extensions.vscode-clangd`),
+**CMake Tools** (`ms-vscode.cmake-tools`), and
+[Workspace Shared Settings](https://github.com/bohdan-shulha/vs-wss)
+(`b-shulha.wss`) extensions. For Remote SSH, install them on the remote host.
+Open this project in a trusted workspace and run **Workspace Shared Settings:
+Apply Workspace Settings** from the Command Palette, then reload the window.
+
+The extension expands `.vscode/settings.workspace.json` into the local,
+Git-ignored `.vscode/settings.json`. The helper enters this project's
+`shell.nix` to resolve absolute paths for `clangd`, CMake, Ninja, and the
+compilers. CMake also receives the shell's `PATH`, with temporary directories
+set to `/tmp` so they remain valid after the helper's Nix shell exits. This
+works when the VS Code extension host starts outside `nix-shell`, including
+over SSH; opening `nix-shell` in an integrated terminal alone does not update
+that host's environment.
+
+Run **CMake: Configure**, then **CMake: Build** (or use the commands above).
+`clangd` reads `build/compile_commands.json` and queries the resolved Nix C++
+compiler for system header paths. C++ completion, navigation, diagnostics, and
+formatting use `clangd`; the Microsoft C/C++ IntelliSense engine is disabled
+in the shared settings to avoid duplicate diagnostics.
+
+Keep shared settings in `settings.workspace.json`; command substitutions are
+expanded by Workspace Shared Settings rather than VS Code itself. Reapply the
+settings after changing `shell.nix` or updating Nix packages, reconfigure the
+build, and run **clangd: Restart language server**.
+
 ## Contribute
 
 Have you found a bug/mistake or any other proposal and want to contribute? Feel free to open an issue or pull request!
