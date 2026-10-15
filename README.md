@@ -94,6 +94,18 @@ void testValueTypeId() {
 }
 ```
 
+## Zephyr
+
+When this repository is included as a Zephyr module, enable the framework in your application's `prj.conf`. For a C++17 application:
+
+```conf
+CONFIG_CPP=y
+CONFIG_STD_CPP17=y
+CONFIG_RTTI_OPEN_HIERARCHY=y
+```
+
+C++20 and later standards are also supported. The framework provides its own type checks and pointer casts, so Zephyr's compiler-provided RTTI option (`CONFIG_CPP_RTTI`) can remain disabled.
+
 ## Type ID configuration
 
 By default, `RTTI::TypeId` is a `std::uint32_t` containing the existing FNV1a hash of the type name. Hash IDs are deterministic for the same compiler-generated type name; different compilers or changes to those names can produce different IDs.

@@ -1,0 +1,15 @@
+config RTTI_OPEN_HIERARCHY
+	bool "Open hierarchy runtime type information (RTTI) framework"
+	help
+	  Enable the header-only RTTI framework for C++17 and later. It
+	  provides type identification, inheritance checks, and checked
+	  pointer casts across class hierarchies, including multiple and
+	  virtual inheritance.
+
+	  Classes opt in using RTTI::Enable and RTTI_DECLARE_TYPEINFO.
+	  Non-polymorphic types can use RTTI_DECLARE_TRIVIAL to expose
+	  compile-time type information without virtual functions.
+
+	  Configure the application for C++17 or a later standard. The
+	  compiler-provided RTTI option (CPP_RTTI) can remain disabled.
+	  Enabling this option adds the framework's headers to the build.
