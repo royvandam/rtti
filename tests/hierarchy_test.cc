@@ -2,6 +2,7 @@
 
 #include <rtti.hh>
 #include <type_traits>
+#include <utility>
 
 struct GrandParent : virtual RTTI::Enable {
     RTTI_DECLARE_TYPEINFO(GrandParent);
@@ -57,8 +58,10 @@ namespace {
 
         EXPECT_EQ(ptr->template cast<void>(), expected);
         EXPECT_EQ(ptr->template cast<const void>(), expected);
+#if defined(__cpp_rtti) || defined(_CPPRTTI)
         EXPECT_EQ(ptr->template cast<void>(), dynamic_cast<Void*>(ptr));
         EXPECT_EQ(ptr->template cast<const void>(), dynamic_cast<void const*>(ptr));
+#endif
     }
 
     TEST(HierarchyTest, TypeIdentification) {
@@ -125,52 +128,100 @@ namespace {
         ChildA childA;
         EXPECT_EQ(childA.cast<ChildA>(), &childA);
         EXPECT_EQ(childA.cast<ChildB>(), nullptr);
-        EXPECT_EQ(childA.cast<ParentA>(), dynamic_cast<ParentA*>(&childA));
         EXPECT_EQ(childA.cast<ParentA>(), static_cast<ParentA*>(&childA));
-        EXPECT_EQ(childA.cast<ParentB>(), dynamic_cast<ParentB*>(&childA));
         EXPECT_EQ(childA.cast<ParentB>(), static_cast<ParentB*>(&childA));
-        EXPECT_EQ(childA.cast<GrandParent>(), dynamic_cast<GrandParent*>(&childA));
         EXPECT_EQ(childA.cast<GrandParent>(), static_cast<GrandParent*>(&childA));
+#if defined(__cpp_rtti) || defined(_CPPRTTI)
+        EXPECT_EQ(childA.cast<ParentA>(), dynamic_cast<ParentA*>(&childA));
+        EXPECT_EQ(childA.cast<ParentB>(), dynamic_cast<ParentB*>(&childA));
+        EXPECT_EQ(childA.cast<GrandParent>(), dynamic_cast<GrandParent*>(&childA));
+#endif
     }
 
     TEST(HierarchyTest, UpCastingConst) {
         ChildA const childA;
         EXPECT_EQ(childA.cast<ChildA>(), &childA);
         EXPECT_EQ(childA.cast<ChildB>(), nullptr);
-        EXPECT_EQ(childA.cast<ParentA>(), dynamic_cast<ParentA const*>(&childA));
         EXPECT_EQ(childA.cast<ParentA>(), static_cast<ParentA const*>(&childA));
-        EXPECT_EQ(childA.cast<ParentB>(), dynamic_cast<ParentB const*>(&childA));
         EXPECT_EQ(childA.cast<ParentB>(), static_cast<ParentB const*>(&childA));
-        EXPECT_EQ(childA.cast<GrandParent>(), dynamic_cast<GrandParent const*>(&childA));
         EXPECT_EQ(childA.cast<GrandParent>(), static_cast<GrandParent const*>(&childA));
+#if defined(__cpp_rtti) || defined(_CPPRTTI)
+        EXPECT_EQ(childA.cast<ParentA>(), dynamic_cast<ParentA const*>(&childA));
+        EXPECT_EQ(childA.cast<ParentB>(), dynamic_cast<ParentB const*>(&childA));
+        EXPECT_EQ(childA.cast<GrandParent>(), dynamic_cast<GrandParent const*>(&childA));
+#endif
     }
 
     TEST(HierarchyTest, DownCasting) {
         ChildA childA;
         GrandParent* grandParent = childA.cast<GrandParent>();
+        ASSERT_NE(grandParent, nullptr);
 
         EXPECT_EQ(grandParent->cast<ChildA>(), &childA);
         EXPECT_EQ(grandParent->cast<ChildB>(), nullptr);
-        EXPECT_EQ(grandParent->cast<ParentA>(), dynamic_cast<ParentA*>(&childA));
         EXPECT_EQ(grandParent->cast<ParentA>(), static_cast<ParentA*>(&childA));
-        EXPECT_EQ(grandParent->cast<ParentB>(), dynamic_cast<ParentB*>(&childA));
         EXPECT_EQ(grandParent->cast<ParentB>(), static_cast<ParentB*>(&childA));
-        EXPECT_EQ(grandParent->cast<GrandParent>(), dynamic_cast<GrandParent*>(&childA));
         EXPECT_EQ(grandParent->cast<GrandParent>(), static_cast<GrandParent*>(&childA));
+#if defined(__cpp_rtti) || defined(_CPPRTTI)
+        EXPECT_EQ(grandParent->cast<ParentA>(), dynamic_cast<ParentA*>(&childA));
+        EXPECT_EQ(grandParent->cast<ParentB>(), dynamic_cast<ParentB*>(&childA));
+        EXPECT_EQ(grandParent->cast<GrandParent>(), dynamic_cast<GrandParent*>(&childA));
+#endif
     }
 
     TEST(HierarchyTest, DownCastingConst) {
         ChildA const childA;
         GrandParent const* grandParent = childA.cast<GrandParent>();
+        ASSERT_NE(grandParent, nullptr);
 
         EXPECT_EQ(grandParent->cast<ChildA>(), &childA);
         EXPECT_EQ(grandParent->cast<ChildB>(), nullptr);
-        EXPECT_EQ(grandParent->cast<ParentA>(), dynamic_cast<ParentA const*>(&childA));
         EXPECT_EQ(grandParent->cast<ParentA>(), static_cast<ParentA const*>(&childA));
-        EXPECT_EQ(grandParent->cast<ParentB>(), dynamic_cast<ParentB const*>(&childA));
         EXPECT_EQ(grandParent->cast<ParentB>(), static_cast<ParentB const*>(&childA));
-        EXPECT_EQ(grandParent->cast<GrandParent>(), dynamic_cast<GrandParent const*>(&childA));
         EXPECT_EQ(grandParent->cast<GrandParent>(), static_cast<GrandParent const*>(&childA));
+#if defined(__cpp_rtti) || defined(_CPPRTTI)
+        EXPECT_EQ(grandParent->cast<ParentA>(), dynamic_cast<ParentA const*>(&childA));
+        EXPECT_EQ(grandParent->cast<ParentB>(), dynamic_cast<ParentB const*>(&childA));
+        EXPECT_EQ(grandParent->cast<GrandParent>(), dynamic_cast<GrandParent const*>(&childA));
+#endif
+    }
+
+    TEST(HierarchyTest, ConstTargetsPreservePointerTypes) {
+        ChildA child;
+        ChildA const& immutable = child;
+        static_assert(std::is_same_v<decltype(child.cast<ParentA>()), ParentA*>);
+        static_assert(std::is_same_v<decltype(child.cast<const ParentA>()), ParentA const*>);
+        static_assert(std::is_same_v<decltype(immutable.cast<ParentA>()), ParentA const*>);
+        static_assert(std::is_same_v<decltype(immutable.cast<const ParentA>()), ParentA const*>);
+        static_assert(noexcept(child.cast<ParentA>()));
+        static_assert(noexcept(immutable.cast<ParentA>()));
+        EXPECT_EQ(child.cast<const ParentA>(), static_cast<ParentA const*>(&child));
+        EXPECT_EQ(child.cast<const ParentB>(), static_cast<ParentB const*>(&child));
+        EXPECT_EQ(immutable.cast<const ParentA>(), static_cast<ParentA const*>(&child));
+        EXPECT_EQ(child.cast<const ChildB>(), nullptr);
+    }
+
+    TEST(HierarchyTest, VirtualDiamondSiblingCasts) {
+        ChildA child;
+        ParentA* parentA = &child;
+        ParentB* parentB = &child;
+        EXPECT_EQ(parentA->cast<ParentB>(), parentB);
+        EXPECT_EQ(parentB->cast<ParentA>(), parentA);
+        EXPECT_EQ(std::as_const(*parentA).cast<ParentB>(), parentB);
+        EXPECT_EQ(std::as_const(*parentB).cast<const ParentA>(), parentA);
+    }
+
+    TEST(HierarchyTest, DispatchesTypedOperationsThroughEnable) {
+        ChildA child;
+        RTTI::Enable& interface = child;
+        RTTI::Enable const& immutable = interface;
+        EXPECT_EQ(interface.typeId(), ChildA::TypeInfo::Id());
+        EXPECT_TRUE(interface.isById(ParentB::TypeInfo::Id()));
+        EXPECT_FALSE(immutable.isById(ChildB::TypeInfo::Id()));
+        EXPECT_TRUE(immutable.is<const ParentA>());
+        EXPECT_EQ(interface.cast<ChildA>(), &child);
+        EXPECT_EQ(immutable.cast<const ParentB>(), static_cast<ParentB const*>(&child));
+        EXPECT_EQ(interface.cast<ChildB>(), nullptr);
     }
 
     TEST(HierarchyTest, NonVirtualDiamondCasting) {

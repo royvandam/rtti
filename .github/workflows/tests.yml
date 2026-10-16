@@ -1,0 +1,51 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        cxx: [g++, clang++]
+        standard: [17, 20]
+        pointer_ids: ["OFF", "ON"]
+        flags: [""]
+        include:
+          - cxx: clang++
+            standard: 17
+            pointer_ids: "OFF"
+            flags: -fsanitize=address,undefined -fno-omit-frame-pointer
+          - cxx: clang++
+            standard: 17
+            pointer_ids: "ON"
+            flags: -fsanitize=address,undefined -fno-omit-frame-pointer
+          - cxx: g++
+            standard: 17
+            pointer_ids: "OFF"
+            flags: -funsigned-char
+    steps:
+      - uses: actions/checkout@v6
+      - name: Configure
+        env:
+          CXX: ${{ matrix.cxx }}
+          TEST_STANDARD: ${{ matrix.standard }}
+          TEST_POINTER_IDS: ${{ matrix.pointer_ids }}
+          TEST_FLAGS: ${{ matrix.flags }}
+        run: >-
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_CXX_STANDARD="$TEST_STANDARD"
+          -DRTTI_USE_POINTER_TYPE_IDS="$TEST_POINTER_IDS"
+          -DCMAKE_CXX_FLAGS="$TEST_FLAGS"
+          -DBUILD_BENCHMARK=OFF
+      - name: Build
+        run: cmake --build build --parallel 2
+      - name: Test with and without native RTTI
+        run: ctest --test-dir build --output-on-failure

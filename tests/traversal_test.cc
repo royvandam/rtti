@@ -42,6 +42,43 @@ namespace {
         }
     };
 
+    TEST_F(TraversalTest, SelfCastDoesNotVisitParents) {
+        Child child;
+        EXPECT_EQ(child.cast<Child>(), &child);
+        EXPECT_EQ(FirstParent::TypeInfo::castCount, 0);
+        EXPECT_EQ(SecondParent::TypeInfo::castCount, 0);
+        EXPECT_EQ(FirstParent::TypeInfo::isCount, 0);
+        EXPECT_EQ(SecondParent::TypeInfo::isCount, 0);
+    }
+
+    TEST_F(TraversalTest, SelfIdentificationDoesNotVisitParents) {
+        Child child;
+        EXPECT_TRUE(child.is<Child>());
+        EXPECT_EQ(FirstParent::TypeInfo::isCount, 0);
+        EXPECT_EQ(SecondParent::TypeInfo::isCount, 0);
+    }
+
+    TEST_F(TraversalTest, IdentificationStopsAfterFirstMatchingParent) {
+        Child child;
+        EXPECT_TRUE(child.is<FirstParent>());
+        EXPECT_EQ(FirstParent::TypeInfo::isCount, 1);
+        EXPECT_EQ(SecondParent::TypeInfo::isCount, 0);
+    }
+
+    TEST_F(TraversalTest, IdentificationContinuesAfterUnmatchedParent) {
+        Child child;
+        EXPECT_TRUE(child.is<SecondParent>());
+        EXPECT_EQ(FirstParent::TypeInfo::isCount, 1);
+        EXPECT_EQ(SecondParent::TypeInfo::isCount, 1);
+    }
+
+    TEST_F(TraversalTest, MissingIdentificationVisitsEachParentOnce) {
+        Child child;
+        EXPECT_FALSE(child.is<int>());
+        EXPECT_EQ(FirstParent::TypeInfo::isCount, 1);
+        EXPECT_EQ(SecondParent::TypeInfo::isCount, 1);
+    }
+
     TEST_F(TraversalTest, StopsAfterFirstMatchingParent) {
         Child child;
         EXPECT_EQ(child.cast<FirstParent>(), static_cast<FirstParent*>(&child));

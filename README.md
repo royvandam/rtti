@@ -108,7 +108,9 @@ C++20 and later standards are also supported. The framework provides its own typ
 
 ## Type ID configuration
 
-By default, `RTTI::TypeId` is a `std::uint32_t` containing the existing FNV1a hash of the type name. Hash IDs are deterministic for the same compiler-generated type name; different compilers or changes to those names can produce different IDs.
+By default, `RTTI::TypeId` is a `std::uint32_t` containing the 32-bit FNV-1a hash of the type name. Hash IDs are deterministic for the same compiler-generated type name; different compilers or changes to those names can produce different IDs.
+
+The FNV-1a multiplier has been corrected from `19777619` to `16777619`, and input bytes are now interpreted as unsigned. This changes hash IDs produced by earlier revisions. Rebuild all components exchanging RTTI objects together, and regenerate stored hash IDs when upgrading. Pointer IDs are unaffected.
 
 To use process-local pointer IDs, configure CMake with `-DRTTI_USE_POINTER_TYPE_IDS=ON` and link consumers to the `rtti` target. For direct header use, define `RTTI_USE_POINTER_TYPE_IDS=1` before including `rtti.hh`, or pass `-DRTTI_USE_POINTER_TYPE_IDS=1` to the compiler. The default is `0` (hash IDs).
 
@@ -151,6 +153,26 @@ The shell selects Ninja and enables `build/compile_commands.json` for language
 server support. The first build downloads and installs GoogleTest and Google
 Benchmark into `build/external`, so it requires network access. Build once to
 make their headers available to the language server.
+
+CTest runs the complete suite both with and without compiler-provided RTTI.
+Configuration also checks that invalid parent declarations fail to compile with
+the expected diagnostics. The CI matrix covers GCC and Clang, C++17 and C++20,
+both type-ID modes, unsigned `char`, and Clang sanitizers.
+
+To test another configuration locally, use a separate build directory:
+
+```sh
+cmake -S . -B build/pointer-cxx20 -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_CXX_STANDARD=20 -DRTTI_USE_POINTER_TYPE_IDS=ON -DBUILD_BENCHMARK=OFF
+cmake --build build/pointer-cxx20
+ctest --test-dir build/pointer-cxx20 --output-on-failure
+```
+
+For sanitizers, configure with `CXX=clang++` and
+`-DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer"`.
+GCC 15.3 with UBSan rejects constexpr pointer-tag comparisons in pointer-ID
+mode, including in a minimal program without this library; use Clang to test
+that combination.
 
 ### VS Code, including Remote SSH
 

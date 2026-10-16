@@ -117,13 +117,13 @@ namespace RTTI {
     struct TypeInfo {
         using T = std::remove_const_t<std::remove_reference_t<This>>;
 
-        /// Ensure all passed parents are basses of this type.
+        /// Ensure all passed parents are bases of this type.
         static_assert((... && std::is_base_of<Parents, This>::value),
                       "One or more parents are not a base of this type.");
 
-        /// Ensure all passed parent hierarchies have RTTI enabled.
-        static_assert((... && std::is_base_of<Enable, Parents>::value) ||
-                      (... && !std::is_polymorphic<Parents>::value),
+        /// Each parent must have RTTI enabled or be non-polymorphic.
+        static_assert((... && (std::is_base_of<Enable, Parents>::value ||
+                               !std::is_polymorphic<Parents>::value)),
                       "One or more parent hierarchies is not based on top of RTTI::Enable.");
 
         /**
