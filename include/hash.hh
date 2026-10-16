@@ -12,7 +12,11 @@ namespace Hash {
      * @return Calculated hash of the string
      */
     static constexpr std::uint32_t FNV1a(const char* str, std::size_t n, std::uint32_t hash = std::uint32_t{2166136261}) {
-        return n == 0 ? hash : FNV1a(str + 1, n - 1, (hash ^ static_cast<std::uint32_t>(str[0])) * std::uint32_t{19777619});
+        return n == 0
+                   ? hash
+                   : FNV1a(str + 1, n - 1,
+                           (hash ^ static_cast<std::uint32_t>(static_cast<unsigned char>(str[0]))) *
+                               std::uint32_t{16777619});
     }
 
     /**

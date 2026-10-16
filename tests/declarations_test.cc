@@ -7,6 +7,11 @@
 namespace {
     struct PolymorphicBase : virtual RTTI::Enable {
         RTTI_DECLARE_TYPEINFO(PolymorphicBase);
+
+    public:
+        PolymorphicBase() = default;
+        explicit PolymorphicBase(int value) : baseValue(value) {}
+        int baseValue = 0;
     };
 
     struct PolymorphicChild : PolymorphicBase {
@@ -28,6 +33,75 @@ namespace {
     struct TrivialChild : TrivialBaseA, TrivialBaseB {
         RTTI_DECLARE_TRIVIAL(TrivialChild, TrivialBaseA, TrivialBaseB);
     };
+
+    struct TrivialGrandChild : TrivialChild {
+        RTTI_DECLARE_TRIVIAL(TrivialGrandChild, TrivialChild);
+    };
+
+    struct MixedChild
+        : PolymorphicBase
+        , TrivialBaseA {
+        RTTI_DECLARE_TYPEINFO(MixedChild, PolymorphicBase, TrivialBaseA);
+
+    public:
+        explicit MixedChild(int value) : PolymorphicBase(value), TrivialBaseA{value} {}
+    };
+
+    struct ReverseMixedChild
+        : TrivialBaseA
+        , PolymorphicBase {
+        RTTI_DECLARE_TYPEINFO(ReverseMixedChild, TrivialBaseA, PolymorphicBase);
+    };
+
+    TEST(TypeDeclarations, MixedParentsSupportIdentificationAndAdjustedCasts) {
+        MixedChild child(42);
+        EXPECT_EQ(child.baseValue, 42);
+        RTTI::Enable& interface = child;
+        EXPECT_TRUE(interface.is<PolymorphicBase>());
+        EXPECT_TRUE(interface.is<TrivialBaseA>());
+        EXPECT_EQ(interface.cast<PolymorphicBase>(), static_cast<PolymorphicBase*>(&child));
+        ASSERT_EQ(interface.cast<TrivialBaseA>(), static_cast<TrivialBaseA*>(&child));
+        EXPECT_EQ(interface.cast<TrivialBaseA>()->valueA, 42);
+        interface.cast<TrivialBaseA>()->valueA = 17;
+        EXPECT_EQ(child.valueA, 17);
+
+        auto const& immutable = interface;
+        EXPECT_TRUE(immutable.is<MixedChild>());
+        EXPECT_EQ(immutable.cast<MixedChild>(), &child);
+        EXPECT_EQ(immutable.cast<PolymorphicBase>(), static_cast<PolymorphicBase const*>(&child));
+        EXPECT_EQ(immutable.cast<TrivialBaseA>(), static_cast<TrivialBaseA const*>(&child));
+        EXPECT_EQ(immutable.cast<const TrivialBaseA>(), static_cast<TrivialBaseA const*>(&child));
+
+        ReverseMixedChild reverse;
+        EXPECT_TRUE(reverse.is<TrivialBaseA>());
+        EXPECT_TRUE(reverse.is<PolymorphicBase>());
+        EXPECT_EQ(reverse.cast<TrivialBaseA>(), static_cast<TrivialBaseA*>(&reverse));
+        EXPECT_EQ(reverse.cast<PolymorphicBase>(), static_cast<PolymorphicBase*>(&reverse));
+    }
+
+    TEST(TypeDeclarations, TrivialHierarchyTraversesIndirectParents) {
+        constexpr TrivialGrandChild child{};
+        static_assert(TrivialGrandChild::TypeInfo::Is(TrivialChild::TypeInfo::Id()));
+        static_assert(TrivialGrandChild::TypeInfo::Is(TrivialBaseA::TypeInfo::Id()));
+        static_assert(TrivialGrandChild::TypeInfo::Is(TrivialBaseB::TypeInfo::Id()));
+        static_assert(
+            TrivialGrandChild::TypeInfo::DynamicCast(TrivialBaseA::TypeInfo::Id(), &child) ==
+            static_cast<TrivialBaseA const*>(&child));
+        static_assert(
+            TrivialGrandChild::TypeInfo::DynamicCast(TrivialBaseB::TypeInfo::Id(), &child) ==
+            static_cast<TrivialBaseB const*>(&child));
+        static_assert(!TrivialBaseA::TypeInfo::Is(TrivialGrandChild::TypeInfo::Id()));
+    }
+
+    TEST(TypeDeclarations, DynamicCastOfNullReturnsNull) {
+        constexpr TrivialGrandChild const* child = nullptr;
+        static_assert(TrivialGrandChild::TypeInfo::DynamicCast(TrivialGrandChild::TypeInfo::Id(),
+                                                               child) == nullptr);
+        static_assert(TrivialGrandChild::TypeInfo::DynamicCast(TrivialBaseA::TypeInfo::Id(),
+                                                               child) == nullptr);
+        static_assert(TrivialGrandChild::TypeInfo::DynamicCast(RTTI::TypeInfo<int>::Id(), child) ==
+                      nullptr);
+    }
 
     TEST(TypeDeclarations, PolymorphicTypesAreNotCopyableOrMovable) {
         static_assert(!std::is_copy_constructible_v<PolymorphicBase>);

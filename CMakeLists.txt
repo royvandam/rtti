@@ -15,7 +15,9 @@ option(BUILD_BENCHMARK         "Build benchmark binary"                     ON)
 option(RTTI_USE_POINTER_TYPE_IDS "Use process-local pointer IDs instead of deterministic hashes" OFF)
 
 # CXX compilation options
-set(CMAKE_CXX_STANDARD 17)
+if(NOT DEFINED CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 17)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS} -O0 -ggdb")
@@ -70,6 +72,7 @@ endif()
 # Library
 set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/rtti.hh)
 add_library(rtti INTERFACE)
+target_compile_features(rtti INTERFACE cxx_std_17)
 target_include_directories(rtti INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_definitions(rtti INTERFACE RTTI_USE_POINTER_TYPE_IDS=$<BOOL:${RTTI_USE_POINTER_TYPE_IDS}>)
 clang_format(rtti ${SOURCES})
