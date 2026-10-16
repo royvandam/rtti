@@ -1,4 +1,4 @@
-config RTTI_OPEN_HIERARCHY
+config CPP_FAST_RTTI
 	bool "Open hierarchy runtime type information (RTTI) framework"
 	help
 	  Enable the header-only RTTI framework for C++17 and later. It

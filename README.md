@@ -101,7 +101,7 @@ When this repository is included as a Zephyr module, enable the framework in you
 ```conf
 CONFIG_CPP=y
 CONFIG_STD_CPP17=y
-CONFIG_RTTI_OPEN_HIERARCHY=y
+CONFIG_CPP_FAST_RTTI=y
 ```
 
 C++20 and later standards are also supported. The framework provides its own type checks and pointer casts, so Zephyr's compiler-provided RTTI option (`CONFIG_CPP_RTTI`) can remain disabled.
